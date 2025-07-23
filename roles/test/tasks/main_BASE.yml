@@ -1,0 +1,35 @@
+###############################################################################
+######  TEST VARIABLE                                                      #####
+###############################################################################
+######                                                                     #####
+###############################################################################
+- name: Show Environnement Cible
+  debug:
+    msg: "{{ env_var }}"
+
+- name: Show Group VM  
+  debug:
+    msg: "{{ df }}"
+
+- name: DNS  
+  debug:
+    msg: "{{ cpr_dns_servers1 }}"
+
+   
+- name: What is my inventory_hostname
+  debug: 
+    msg: "{{ inventory_hostname }}"
+
+- name: What is my inventory_hostname short
+  debug: 
+    msg: "{{ inventory_hostname_short }}"
+
+- name: What is my ansible_hostname
+  debug:
+    msg: "{{ ansible_host }}"
+    
+- name: What is my domain
+  debug:
+    msg: "{{ cpr_domain }}"
+    
+

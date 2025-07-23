@@ -1,0 +1,135 @@
+- name: Test existence super patch ( last 10032022 =>  p33751658_122140_Generic.zip )
+  stat:  
+    path: "{{ folder_patch }}/{{ last_patch_Soasuite }}"
+  register: installpatch_found
+
+- name: Copie patch weblo 
+  copy:
+   src: "{{ last_patch_Soasuite }}"
+   dest: "{{ folder_patch }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+  when: not installpatch_found.stat.exists
+
+- name: Decompression patch WL1
+  unarchive:
+    src: "{{ folder_patch }}/{{ last_patch_Soasuite }}"
+    dest: "{{ folder_patch }}"
+    copy: no
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence patch WL1
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch lsinventory" | grep 12.2.1.4.220105'
+  register: grep_result
+  ignore_errors: yes
+
+- debug: msg="Test result grep =  {{ grep_result.rc }}"
+  ignore_errors: yes
+
+- name: Application du patch WL1
+  shell: 'su -l oracle -c "export OPATCH_NO_FUSER=true;cd {{ folder_patch }}/SOA_SPB_12.2.1.4.220113/binary_patches;{{ folder_middleware_home }}/OPatch/opatch napply -force -silent -oh {{ folder_middleware_home }} -phBaseFile linux64_patchlist.txt"'
+  when: grep_result.rc != 0
+  ignore_errors: yes
+
+- name: Test existence patch SOA 
+  stat:
+    path: "{{ folder_patch }}/p31192457_12214211221_Generic.zip"
+  register: installpatch_found
+
+- name: Copie patch SOA
+  copy:
+   src: "p31192457_12214211221_Generic.zip"
+   dest: "{{ folder_patch }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+  when: not installpatch_found.stat.exists
+
+- name: Decompression patch SOA
+  unarchive:
+    src: "{{ folder_patch }}/p31192457_12214211221_Generic.zip"
+    dest: "{{ folder_patch }}"
+    copy: no
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence patch SOA
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch lsinventory" | grep 31192457'
+  register: grep_result
+  ignore_errors: yes
+
+- debug: msg="Test result grep =  {{ grep_result.rc }}"
+  ignore_errors: yes
+
+- name: Application du patch SOA
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch apply -force -silent {{ folder_patch }}/31192457"'
+  when: grep_result.rc != 0
+  ignore_errors: yes
+
+- name: Test existence patch OSB1
+  stat:
+    path: "{{ folder_patch }}/p31540010_122140_Generic.zip"
+  register: installpatch_found
+
+- name: Copie patch OSB1
+  copy:
+   src: "p31540010_122140_Generic.zip"
+   dest: "{{ folder_patch }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+  when: not installpatch_found.stat.exists
+
+- name: Decompression patch OSB1
+  unarchive:
+    src: "{{ folder_patch }}/p31540010_122140_Generic.zip"
+    dest: "{{ folder_patch }}"
+    copy: no
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence patch OSB1
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch lsinventory" | grep 31540010'
+  register: grep_result
+  ignore_errors: yes
+
+- debug: msg="Test result grep =  {{ grep_result.rc }}"
+  ignore_errors: yes
+
+- name: Application du patch OSB1
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch apply -force -silent {{ folder_patch }}/31540010"'
+  when: grep_result.rc != 0
+  ignore_errors: yes
+  
+- name: Test existence patch OSB2
+  stat:
+    path: "{{ folder_patch }}/p32121987_122140_Generic.zip"
+  register: installpatch_found
+
+- name: Copie patch OSB2
+  copy:
+   src: "p32121987_122140_Generic.zip"
+   dest: "{{ folder_patch }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+  when: not installpatch_found.stat.exists
+
+- name: Decompression patch OSB2
+  unarchive:
+    src: "{{ folder_patch }}/p32121987_122140_Generic.zip"
+    dest: "{{ folder_patch }}"
+    copy: no
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence patch OSB2
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch lsinventory" | grep 32121987'
+  register: grep_result
+  ignore_errors: yes
+
+- debug: msg="Test result grep =  {{ grep_result.rc }}"
+  ignore_errors: yes
+
+- name: Application du patch OSB2
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch apply -force -silent {{ folder_patch }}/32121987"'
+  when: grep_result.rc != 0
+  ignore_errors: yes

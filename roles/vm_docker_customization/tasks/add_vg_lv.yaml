@@ -1,0 +1,123 @@
+- name: Check Vg docker exist
+  shell: 'lsblk | grep "vg--docker"'
+  register: result
+  ignore_errors: true
+
+- debug:
+    var: ansible_lvm
+
+- name: Debug lvm
+  debug: 
+    var: "result.rc"
+
+- name: Create a volume group on {{ lv_name_dk }}
+  lvg:
+    vg: "{{ vg_name_dk }}"
+    pvs: /dev/sdc1
+    state: present
+  ignore_errors: True
+  failed_when: false
+  no_log: True
+
+- name: Create a logical volume {{ lv_name_dk }}
+  lvol:
+    vg: "{{ vg_name_dk }}"
+    lv: "{{ lv_name_dk }}"
+    size: 100%FREE
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_dk }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_dk }}/{{ lv_name_dk }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_dk }}"
+    state: directory
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_dk }}
+  mount:
+    name: "/{{ mount_name_dk }}"
+    src: "/dev/{{ vg_name_dk }}/{{ lv_name_dk }}"
+    fstype: ext4
+    state: mounted
+
+- name: Check Vg Misc exist
+  shell: 'lsblk | grep "vg--misc"'
+  register: result
+  ignore_errors: true
+
+- name: Debug lvm
+  debug: 
+    var: "result.rc"
+
+- name: Create a volume group on Misc
+  lvg:
+    vg: "{{ vg_name_misc }}"
+    pvs: /dev/sdb1
+    state: present
+  ignore_errors: True
+  failed_when: false
+  no_log: True
+
+- name: Create a logical volume {{ lv_name_data }}
+  lvol:
+    vg: "{{ vg_name_misc }}"
+    lv: "{{ lv_name_data }}"
+    size: 50%FREE
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_data }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_misc }}/{{ lv_name_data }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_data }}"
+    state: directory
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_data }}
+  mount:
+    name: "/{{ mount_name_data }}"
+    src: "/dev/{{ vg_name_misc }}/{{ lv_name_data }}"
+    fstype: ext4
+    state: mounted
+
+- name: Create a logical volume {{ lv_name_exploit }}
+  lvol:
+    vg: "{{ vg_name_misc }}"
+    lv: "{{ lv_name_exploit }}"
+    size: 100%FREE
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_exploit }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_misc }}/{{ lv_name_exploit }}"
+    
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_exploit }}"
+    state: directory
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_exploit }}
+  mount:
+    name: "/{{ mount_name_exploit }}"
+    src: "/dev/{{ vg_name_misc }}/{{ lv_name_exploit }}"
+    fstype: ext4
+    state: mounted

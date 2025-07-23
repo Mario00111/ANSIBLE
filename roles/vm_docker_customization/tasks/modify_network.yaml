@@ -1,0 +1,9 @@
+- name: Replace ens224 conf
+
+  delegate_to: "{{inventory_hostname}}"
+  replace:
+      path: /etc/network/interfaces
+      regexp: 'auto ens224'
+      replace: "allow-hotplug ens224"
+  tags: 
+      - modify_netw

@@ -1,0 +1,123 @@
+###############################################################################
+#####################  CUSTOM VM DOCKER                  #####################
+###############################################################################
+- name: Vérifier l'accès à /dev/sdb
+  command: ls -l /dev/sdb
+  become: yes
+  register: device_info
+
+
+- name: create partition
+  parted:
+    device: /dev/sdb
+    number: 1
+    flags: [ lvm ]
+    state: present
+
+- name: Format partition
+  filesystem:
+    fstype: ext4
+    dev: /dev/sdb1
+
+- name: create partition
+  parted:
+    device: /dev/sdc
+    number: 1
+    flags: [ lvm ]
+    state: present
+
+- name: Format partition
+  filesystem:
+    fstype: ext4
+    dev: /dev/sdc1
+
+- name: Include task Add VG/LV create if vg not exists
+  include_role:
+    name: vm_docker_customization
+    tasks_from: add_vg_lv.yaml
+
+- name: group "docker" create
+  group:
+    name: "{{ group_1 }}"
+    state: present  
+
+- name: Adding user docker  
+  user: 
+    name: "{{ user_1 }}"
+
+    group: "{{ group_1 }}"
+    shell: /bin/bash
+    append: yes
+
+- name: change password
+  user:
+    name: "{{ user_1 }}"
+    state: present
+    password: "{{ password_user_1 | password_hash('sha512') }}"
+
+- name: group "exploit" create
+  group:
+    name: "{{ group_2 }}"
+    gid: "{{ group_2_gid }}"
+    state: present
+  tags: 
+    - adduser
+
+- name: Adding user docker  
+  user: 
+    name: "{{ user_2 }}"
+    group: "{{ group_2 }}"
+    uid : "{{ group_2_gid }}"
+    shell: /bin/bash
+    append: yes
+  tags: 
+    - adduser
+
+- name: change password
+  user:
+    name: "{{ user_2 }}"
+    state: present
+    password: "{{ password_user_2 | password_hash('sha512') }}"
+  tags: 
+    - adduser
+
+- name: adding existing user ansible to group docker
+  user:
+    name: ansible
+    groups: "{{ group_1 }}"
+    append: yes
+
+- name: Bashrc cprp
+  copy:
+    src: "bash.bashrc"
+    dest: /etc/bash.bashrc
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  tags:
+    - Maj_Bashrc
+
+- name: Include task modify network
+  include_role:
+    name: vm_docker_customization
+    tasks_from: modify_network.yaml
+  tags: 
+      - modify_netw
+
+- name: Include Tools
+  include_role:
+    name: vm_docker_customization
+    tasks_from: tools.yaml
+    
+- name: Include task modify network
+  include_role:
+    name: vm_docker_customization
+    tasks_from: modify_network.yaml
+    apply:
+      delegate_to: "{{ inventory_hostname }}"
+  when:
+    - ( ansible_os_family is not search("RedHat"))
+  tags:
+    - modify_netw
+

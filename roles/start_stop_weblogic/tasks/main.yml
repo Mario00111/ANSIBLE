@@ -1,0 +1,39 @@
+###############################################################################
+#####################  Redemarrage WEBLO EP               #####################
+###############################################################################
+
+########## kill process java ########
+- name: Kill Java
+  shell: 'su -l oracle -c "pkill -9 java"'
+  register: result
+  ignore_errors: yes
+
+########## ARRET /RELANCE DES SERVEURS WLM ########
+- name: Start/Stop domaine
+  shell: 'su -l oracle -c "{ echo "3"; echo "12"; } | {{ folder_scripts }}/kraow.sh"'
+  register: result
+  ignore_errors: yes
+  when : name_host.find("wlm") != -1
+  
+########## ARRET /RELANCE DES SERVEURS RIW ########
+- name: Start/Stop domaine
+  shell: 'su -l oracle -c "{ echo "3"; echo "12"; } | {{ folder_scripts }}/kraow.sh"'
+  register: result
+  ignore_errors: yes
+  when : name_host.find("riw") != -1
+  
+########## ARRET /RELANCE DES SERVEURS EPW ########
+- name: Start/Stop domaine
+  shell: 'su -l oracle -c "{ echo "3"; echo "12"; } | {{ folder_scripts }}/kraow.sh"'
+  register: result
+  ignore_errors: yes
+  when : name_host.find("epw") != -1
+
+  
+########### START DES SERVEURS ########
+#- name: Start service weblogic
+#  systemd:
+#    name: weblogic
+#    state: started
+#    masked: no
+#    daemon_reload: yes

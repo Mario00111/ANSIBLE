@@ -1,0 +1,2 @@
+## Allow ansible  to run any commands anywhere
+ansible ALL=(ALL)       NOPASSWD: ALL

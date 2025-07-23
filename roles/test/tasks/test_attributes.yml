@@ -1,0 +1,40 @@
+- name: vm info
+  vmware_guest_info:
+    hostname: '{{ vmware_hostname }}'
+    username: '{{ vmware_user }}'
+    password: '{{ vmware_pass }}'
+    validate_certs: no
+    name: "{{ inventory_hostname_short }}"
+    datacenter: "{{ vmware_datacenter }}"
+  register: vm_infos
+
+- name: Debug attri
+  debug: 
+    msg: "{{ vm_infos }}"
+
+- name: Set variable
+  set_fact:
+    moid: “{{ vm_infos.instance.moid }}”
+
+- name: Configure custom attributes
+  vmware_guest_custom_attributes:
+    hostname: '{{ vmware_hostname }}'
+    username: '{{ vmware_user }}'
+    password: '{{ vmware_pass }}'
+    validate_certs: no
+    name: "{{ inventory_hostname_short }}"
+    moid: "{{ moid }}"
+    folder: "{{ vmware_folder }}"
+    state: present
+    attributes:
+      - name: "Contact metier"
+        value: "adm-vtom@cprpsncf.fr"
+      - name: "Plage de maintenance"
+        value: "22"
+  register: custom
+
+- name: Debug attri
+  debug: 
+    msg: "{{ custom }}"
+  
+

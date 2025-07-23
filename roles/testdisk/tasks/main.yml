@@ -1,0 +1,30 @@
+- name: parse interfaces file
+  interfaces_ether_interfaces:
+  register: interfaces_output
+
+- name: Get all disks in all controllers
+  vmware_guest_disk_info:
+    hostname: '{{ vmware_hostname }}'
+    username: '{{ vmware_user }}'
+    password: '{{ vmware_pass }}'
+    validate_certs: no
+    name: "{{ inventory_hostname_short }}"
+    datacenter: "{{ vmware_datacenter }}"
+  register: existing_disk
+
+- name: Create a dict with controller and the total number of disks
+  set_fact:
+      disk_info: "{{ disk_info | default({}) | combine({ item.value.controller_bus_number : item.value.unit_number} )}}"
+  with_dict: "{{ existing_disk.guest_disk_info }}"
+
+- debug:
+    msg: "{{ disk_info }}"
+
+- name: Charge var disk before remove
+  set_fact:
+      disk: "{{ disk | default([]) + [{ 'label_name' : item.value.label }] }}"
+  with_dict: "{{ existing_disk.guest_disk_info }}"
+
+- debug:
+    var: disk
+

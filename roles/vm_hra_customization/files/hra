@@ -1,0 +1,419 @@
+#!/bin/ksh
+#
+# hra     Ce script arrete et demarre HRACCESS proprement
+#
+# chkconfig: 345 99 01
+# description:  Arrete et demarre HRACCESS proprement
+#
+### BEGIN INIT INFO
+# Provides: hra
+# Required-Start: $network $local_fs $syslog
+# Required-Stop:  $network $local_fs $syslog
+# Default-Start: 3 4 5
+# Default-Stop: 0 1 2 6
+# chkconfig: 345 99 01
+# Short-Description: Stop and Start HRACCESS
+### END INIT INFO
+
+HRA_USER=hraccess
+ORACLE_USER=oracle
+SIGACS=/HRACCESS
+SHUTDOWN_WAIT=45
+LOG=/datas/JOBS/StopStart/HRA-$1-`date '+%Y%m%d'`.log
+ENVI="`echo $(hostname) | cut -d'-' -f1 | tr -s '[a-z]'  '[A-Z]'`"
+
+# SERVEUR ORACLE ----------------------------------------------------------------
+#       IN      :
+#       OUT     : code retour : 0 base en ligne, 1 sinon
+#
+function ORACLE
+{
+  echo "Test de connexion sqlplus sur la base ORACLE12 HRaccess ..." | tee -a ${LOG}
+  msg=$(su - $ORACLE_USER -c '. /home/oracle/.bash_profile ; echo "Connexion a la base ${ORACLE_SID} en cours ..." ; echo quit | sqlplus -NOLOGINTIME ${USER_SGBD}')
+  echo "${msg}" | tee -a ${LOG}
+  enligne=$(echo ${msg} | grep -c "Connected to:")
+  # echo "Base en ligne = ${enligne}" | tee -a ${LOG}
+  if ( [[ "${enligne}" = "1" ]] ) then
+    echo -e "\\n################# OK : la base ORACLE12 `echo ${msg} | grep -o HRA1[A-Z]*` est joignable et en ligne.\\n" | tee -a ${LOG}
+    rc=0
+  else
+    echo -e "\\nXXXXXXXXXXXXXXXXX KO : la base ORACLE12 `echo ${msg} | grep -o HRA1[A-Z]*` n'est pas joignable. HRACCESS NE PEUT PAS FONCTIONNER.\\n" | tee -a ${LOG}
+    rc=1
+  fi
+  return ${rc}
+}
+
+function RETOURPID
+{
+  echo `ps -fu ${HRA_USER} | grep $1 | grep -v grep | awk '{ print $2 }'`
+}
+
+# SERVEUR OPENHR ----------------------------------------------------------------
+#       IN      : start ou stop
+#       OUT     : code retour : 0 OK, 1 sinon
+#
+function OPENHR
+{
+  ordre=$1
+  case  "${ordre}" in
+
+  "start")
+    echo "################# START service $0 en cours ..." 2>&1 | tee -a ${LOG}
+    msg=$(su - ${HRA_USER} -c 'cd /HRACCESS/openhr/bin/ ; echo "USER=`id`, SHELL=${SHELL}, PWD=`pwd`" ; start_openhr.sh')
+    echo "Retour du contexte et du script start_openhr.sh (ne retourne rien en principe), ${msg}" | tee -a ${LOG}
+    echo "On patiente 30 secondes ... pour verifier 'OpenHR server is ready for business' dans le LOG $SIGACS/openhr/logs/ophrs.log" | tee -a ${LOG}
+    sleep 30
+    # ON CHERCHE dans les 20 dernieres lignes "2018-11-15 13:22:18,471 INFO [ ][      ][main] - OPHRS1999 OpenHR server is ready for business (Release <7.000>)"
+    echo -e "20 dernieres lignes du LOG $SIGACS/openhr/logs/ophrs.log :\\n`tail -20 $SIGACS/openhr/logs/ophrs.log`" | tee -a ${LOG}
+    statut=$(tail -20 $SIGACS/openhr/logs/ophrs.log | grep -c "`date +\%Y-\%m-\%d`.*OpenHR server is ready for business.*")
+    echo "Statut = ${statut}" | tee -a ${LOG}
+    if ( [[ "${statut}" = "1" ]] ) then
+      echo -e "################# OK : Le serveur OPENHR a démarré correctement.\\n" | tee -a ${LOG}
+      rc=0
+    else
+      echo -e "XXXXXXXXXXXXXXXXX KO : Le serveur OPENHR est deja demarre ou n'a pas pu demarrer. Verifier le log : $SIGACS/openhr/logs/ophrs.logs.\\n" | tee -a ${LOG}
+      rc=1
+    fi
+  ;;
+
+  "stop")
+    echo "################# STOP service $0 en cours ..." 2>&1 | tee -a ${LOG}
+    msg=$(su - ${HRA_USER} -c 'cd /HRACCESS/openhr/bin/ ; echo "USER=`id`, SHELL=${SHELL}, PWD=`pwd`" ; stop_openhr.sh')
+    echo "Retour du contexte et du script stop_openhr.sh , ${msg}" | tee -a ${LOG}
+    # echo "On patiente 30 secondes ... pour verifier 'OpenHR server successfully stopped' dans le LOG $SIGACS/openhr/logs/ophrs.log" | tee -a ${LOG}
+    echo "On patiente 30 secondes ... pour verifier le message de retour 'OpenHR server stopped' et processus openhr absent." | tee -a ${LOG}
+    sleep 30
+    statut=$(echo ${msg} | grep -c "OpenHR server stopped")
+    pid=`(RETOURPID openhr)`
+    echo -e "20 dernieres lignes du LOG $SIGACS/openhr/logs/ophrs.log :\\n`tail -20 $SIGACS/openhr/logs/ophrs.log`" | tee -a ${LOG}
+    echo "Statut = ${statut} , Pid OPENHR = ${pid}" | tee -a ${LOG}
+    if ( [[ "${pid}" ]] ) then
+      echo "KO : Le serveur OPENHR n'a pas pu s'arrete ou est dans un etat incoherent. kill du processus ${pid} en cours ..." | tee -a ${LOG}
+      kill -9 ${pid} | tee -a ${LOG} ; sleep 1 ;  pid=`(RETOURPID openhr)`
+    fi
+    if ( [[ "$statut" == "1" && "$pid" = "" ]] ) then
+      echo -e "################# OK : Le serveur OPENHR s'est arrete correctement.\\n" | tee -a ${LOG}
+      rc=0
+    else
+      echo -e "XXXXXXXXXXXXXXXXX KO : Le serveur OPENHR n'a pas pu s'arrete ou est dans un etat incoherent. Verifier le log : $SIGACS/openhr/logs/ophrs.log.\\n" | tee -a ${LOG}
+      rc=1
+    fi
+  ;;
+
+  *)
+    rc=255
+    echo "ERR : Parametre <${ordre}> incorrect" | tee -a ${LOG}
+  ;;
+  esac
+  return ${rc}
+}
+
+# SERVEUR CSAP0 ---------------------------------------------------------------
+#       IN      : start ou stop
+#       OUT     : code retour : 0 OK, 1 sinon
+#
+function CSAP0
+{
+  ordre=$1
+  case  "${ordre}" in
+
+  "start")
+    echo "################# START service $0 en cours ..." 2>&1 | tee -a ${LOG}
+    msg=$(su - ${HRA_USER} -c 'echo "USER=`id`, SHELL=${SHELL}, PWD=`pwd`" ; csadmin start cs')
+    echo "Retour du contexte et de la commande csadmin start cs, ${msg}" | tee -a ${LOG}
+    statut=$(echo ${msg} | grep -c "The server is running")
+    echo "Statut = ${statut}" | tee -a ${LOG}
+    if ( [[ "${statut}" = "1" ]] ) then
+      echo -e "################# OK : Le service $0 a demarre correctement.\\n" | tee -a ${LOG}
+      rc=0
+    else
+      echo -e "XXXXXXXXXXXXXXXXX KO : Le service $0 est deja demarre ou n'a pas pu demarrer. Verifier le log : /HRACCESS/adm/log/LOGAP0.\\n" | tee -a ${LOG}
+      rc=1
+    fi
+  ;;
+
+  "stop")
+    echo "################# STOP service $0 en cours ..." 2>&1 | tee -a ${LOG}
+    msg=$(su - ${HRA_USER} -c 'echo "USER=`id`, SHELL=${SHELL}, PWD=`pwd`" ; csadmin stop cs')
+    echo "Retour du contexte et de la commande csadmin stop cs, ${msg}" | tee -a ${LOG}
+
+    echo "On patiente 30 secondes ... pour verifier message 'The server CS is stopped' et processus AP0 absent." | tee -a ${LOG}
+    sleep 30
+    statut=$(echo ${msg} | grep -c "The server CS is stopped")
+    pid=`(RETOURPID AP0)`
+    echo "Statut = ${statut} , Pid AP0 = ${pid}" | tee -a ${LOG}
+    if ( [[ "${pid}" ]] ) then
+      echo "KO : Le service $0 n'a pas pu s'arrete ou est dans un etat incoherent. kill du processus ${pid} en cours ..." | tee -a ${LOG}
+      kill -9 ${pid} | tee -a ${LOG} ; sleep 1 ;  pid=`(RETOURPID AP0)`
+    fi
+    if ( [[ "$statut" == "1" && "$pid" = "" ]] ) then
+      echo -e "################# OK : Le service $0 s'est arrete correctement.\\n" | tee -a ${LOG}
+      rc=0
+    else
+      echo -e "XXXXXXXXXXXXXXXXX KO : Le service $0 n'a pas pu s'arrete ou est dans un etat incoherent. Verifier le log : $SIGACS/adm/log/LOGAP0.\\n" | tee -a ${LOG}
+      rc=1
+    fi
+  ;;
+
+  *)
+    rc=255
+    echo "ERR : Parametre <${ordre}> incorrect" | tee -a ${LOG}
+  ;;
+  esac
+  return ${rc}
+}
+
+# SERVEUR query -------------------------------------------------------------------
+#       IN      : start ou stop
+#       OUT     : code retour : 0 OK, 1 sinon
+#
+function QUERY
+{
+  ordre=$1
+  case  "${ordre}" in
+
+  "start")
+    echo "################# START service $0 en cours ..." 2>&1 | tee -a ${LOG}
+    #     /bin/su - -c "cd /HRACCESS/query/bin/ ; ksh /HRACCESS/query/bin/start_query.sh" $HRA_USER 2>&1 | tee -a $LOG
+    msg=$(su - ${HRA_USER} -c 'cd /HRACCESS/query/bin/ ; echo "USER=`id`, SHELL=${SHELL}, PWD=`pwd`" ; start_query.sh')
+    echo "Retour du contexte et du script start_query.sh (ne retourne rien en principe), ${msg}" | tee -a ${LOG}
+    echo "On patiente 30 secondes ... pour verifier 'HRJS1002 Server ready' dans le LOG $SIGACS/query/logs/qrsrv.log" | tee -a ${LOG}
+    sleep 30
+    # ON CHERCHE dans les 20 dernieres lignes "2018-11-22 12:29:54,006 [main] INFO  - HRJS1002 Server ready"
+    echo -e "20 dernieres lignes du LOG $SIGACS/query/logs/qrsrv.log :\\n`tail -20 $SIGACS/query/logs/qrsrv.log`" | tee -a ${LOG}
+    statut=$(tail -20 $SIGACS/query/logs/qrsrv.log | grep -c "`date +\%Y-\%m-\%d`.*HRJS1002 Server ready.*")
+    echo "Statut = ${statut}" | tee -a ${LOG}
+    if ( [[ "${statut}" = "1" ]] ) then
+      echo -e "################# OK : Le serveur QUERY a démarré correctement.\\n" | tee -a ${LOG}
+      rc=0
+    else
+      echo -e "XXXXXXXXXXXXXXXXX KO : Le serveur QUERY est deja demarre ou n'a pas pu demarrer. Verifier le log : $SIGACS/query/logs/qrsrv.log.\\n" | tee -a ${LOG}
+      rc=1
+    fi
+  ;;
+
+  "stop")
+    echo "################# STOP service $0 en cours ..." 2>&1 | tee -a ${LOG}
+    #    /bin/su - -c "cd /HRACCESS/query/bin/ ; ksh /HRACCESS/query/bin/stop_query.sh" $HRA_USER
+    msg=$(su - ${HRA_USER} -c 'cd /HRACCESS/query/bin/ ; echo "USER=`id`, SHELL=${SHELL}, PWD=`pwd`" ; stop_query.sh')
+    echo "Retour du contexte et du script stop_query.sh , ${msg}" | tee -a ${LOG}
+    # Retourne Stopping QueryServer... puis OK. Mais on doit vérifier dans le LOG
+    echo "On patiente 30 secondes ... pour verifier 'HRJS1004 Server stopped' dans le LOG $SIGACS/query/logs/qrsrv.log" | tee -a ${LOG}
+    sleep 30
+    # ON CHERCHE dans les 20 dernieres lignes "2018-11-22 12:20:48,461 [Thread-19] INFO  - HRJS1004 Server stopped"
+    echo -e "20 dernieres lignes du LOG $SIGACS/query/logs/qrsrv.log :\\n`tail -20 $SIGACS/query/logs/qrsrv.log`" | tee -a ${LOG}
+    statut=$(tail -20 $SIGACS/query/logs/qrsrv.log | grep -c "`date +\%Y-\%m-\%d`.*HRJS1004 Server stopped.*")
+    echo "Statut = ${statut}" | tee -a ${LOG}
+    if ( [[ "${statut}" = "1" ]] ) then
+      echo -e "################# OK : Le serveur QUERY s'est arrete correctement.\\n" | tee -a ${LOG}
+      rc=0
+    else
+      echo -e "XXXXXXXXXXXXXXXXX KO : Le serveur QUERY n'a pas pu s'arrete ou est dans un etat incoherent. Verifier le log : $SIGACS/query/logs/qrsrv.log.\\n" | tee -a ${LOG}
+      rc=1
+    fi
+  ;;
+
+  *)
+    rc=255
+    echo "ERR : Parametre <${ordre}> incorrect" | tee -a ${LOG}
+  ;;
+
+  esac
+  return ${rc}
+}
+
+# SERVEUR FRONTAL APACHE ----------------------------------------------------------
+#       IN      : start ou stop
+#       OUT     : code retour : 0 OK, 1 sinon
+#
+function FRONTAL
+{
+  ordre=$1
+  case  "${ordre}" in
+
+  "start")
+    echo "################# START service $0 en cours ..." 2>&1 | tee -a ${LOG}
+    # /bin/su - -c "ssh hraccess@prod-f-hraccess 'cd /HRACCESS/hraspace/bin/ ; ksh /HRACCESS/hraspace/bin/startup.sh'" $HRA_USER 2>&1 | tee -a $LOG
+    msg=$(su - ${HRA_USER} -c 'cd /HRACCESS/hraspace/bin/ ; echo "USER=`id`, SHELL=${SHELL}, PWD=`pwd`" ; startup.sh')
+    echo "Retour du contexte et du script startup.sh , ${msg}" | tee -a ${LOG}
+    echo "On patiente 3 minutes ... pour verifier 'Le démarrage du serveur a pris nnnnn millisecondes' dans le LOG $SIGACS/hraspace/logs/catalina.out" | tee -a ${LOG}
+    sleep 180
+    # ON CHERCHE dans les 20 dernieres lignes "25-Sep-2023 12:20:09.307 INFOS [main] org.apache.catalina.startup.Catalina.start Le démarrage du serveur a pris [142587] millisecondes"
+    echo -e "20 dernieres lignes du LOG $SIGACS/hraspace/logs/catalina.out :\\n`tail -20 $SIGACS/hraspace/logs/catalina.out`" | tee -a ${LOG}
+    # statut=$(tail -20 $SIGACS/hraspace/logs/catalina.out | grep -c "INFOS: Server startup in [0-9]* ms")
+    statut=$(tail -20 $SIGACS/hraspace/logs/catalina.out | grep -c ".*INFOS.*startup.Catalina.start.*millisecondes")
+    echo "Statut = ${statut}" | tee -a ${LOG}
+    if ( [[ "${statut}" = "1" ]] ) then
+      echo -e "################# OK : Le serveur FRONTAL TOMCAT a demarre correctement.\\n" | tee -a ${LOG}
+      rc=0
+    else
+      echo -e "XXXXXXXXXXXXXXXXX KO : Le serveur FRONTAL TOMCAT est deja demarre ou n'a pas pu demarrer. Verifier le log : $SIGACS/hraspace/logs/catalina.out.\\n" | tee -a ${LOG}
+      rc=1
+    fi
+  ;;
+
+  "stop")
+    echo "################# STOP service $0 en cours ..." 2>&1 | tee -a ${LOG}
+    # /bin/su - -c "ssh hraccess@prod-f-hraccess 'cd /HRACCESS/hraspace/bin/ ; ksh /HRACCESS/hraspace/bin/shutdown.sh'" $HRA_USER 2>&1 | tee -a $LOG
+    msg=$(su - ${HRA_USER} -c 'cd /HRACCESS/hraspace/bin ; echo "USER=`id`, SHELL=${SHELL}, PWD=`pwd`" ; shutdown.sh')
+    echo "Retour du contexte et du script shutdown.sh , ${msg}" | tee -a ${LOG}
+    # echo "On patiente 60 secondes ... pour verifier 'INFOS: Destroying ProtocolHandler ["ajp-bio-*8085"]' dans le LOG $SIGACS/hraspace/logs/catalina.out" | tee -a ${LOG}
+    # echo "On patiente 60 secondes ... pour verifier 'INFOS: Destruction du gestionnaire de protocole ["ajp-bio-0:0:0:0:0:0:0:1-8085"]' dans le LOG $SIGACS/hraspace/logs/catalina.out" | tee -a ${LOG}
+    echo "On patiente 60 secondes ... pour verifier 'INFOS [main] org.apache.coyote.AbstractProtocol.destroy Destruction du gestionnaire de protocole' dans le LOG $SIGACS/hraspace/logs/catalina.out" | tee -a ${LOG}
+    sleep 60
+    # ON CHERCHE dans les 20 dernieres lignes "INFOS [main] org.apache.coyote.AbstractProtocol.destroy Destruction du gestionnaire de protocole"
+    echo -e "20 dernieres lignes du LOG $SIGACS/hraspace/logs/catalina.out :\\n`tail -20 $SIGACS/hraspace/logs/catalina.out`" | tee -a ${LOG}
+    statut=$(tail -20 $SIGACS/hraspace/logs/catalina.out | grep -c ".*INFOS.*org.apache.coyote.AbstractProtocol.destroy Destruction du gestionnaire de protocole.*")
+    echo "Statut = ${statut}" | tee -a ${LOG}
+    if ( [[ "${statut}" = "1" ]] ) then
+      echo -e "################# OK : Le serveur FRONTAL TOMCAT s'est arrete correctement.\\n" | tee -a ${LOG}
+      rc=0
+    else
+      echo -e "XXXXXXXXXXXXXXXXX KO : Le serveur FRONTAL APACHE n'a pas pu s'arrete ou est dans un etat incoherent. Verifier le log : $SIGACS/hraspace/logs/catalina.out.\\n" | tee -a ${LOG}
+      rc=1
+    fi
+  ;;
+
+  *)
+    rc=255
+    echo "ERR : Parametre <${ordre}> incorrect" | tee -a ${LOG}
+  ;;
+
+  esac
+  return ${rc}
+}
+
+#
+# MAIN -------------------------------------------------------------------
+#set -x
+#
+
+case "$1" in
+  "start")
+  # Serveur ORACLE demarre ? OUI on poursuit, NON on quitte -----------
+  # START serveur CS AP0 ----------------------------------------------
+  # START serveur OPENHR ----------------------------------------------
+  # START serveur QUERY -----------------------------------------------
+  # START serveur FRONTAL APACHE --------------------------------------
+  echo -e "\\n*********************** START HRACCESS $ENVI le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************\\n" 2>&1 | tee -a $LOG
+  ORACLE
+  rc=$?
+  if ( [[ ${rc} = 0 ]] ) then
+    CSAP0 start
+    rc=$?
+    if ( [[ ${rc} = 0 ]] ) then
+      OPENHR start
+      rc=$?
+      if ( [[ ${rc} = 0 ]] ) then
+        FRONTAL start
+        rc=$?
+        if ( [[ ${rc} = 0 ]] ) then
+          QUERY start
+          rc=$?
+        fi
+      fi
+    fi
+  else
+    echo "KO : La base $ORACLE_SID est INJOIGNABLE. IMPOSSIBLE DE DEMARRER HRACCESS."
+  fi
+  echo -e "\\n*********************** FIN START HRACCESS le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************" 2>&1 | tee -a $LOG
+  echo -e "**********************************          RETOUR=$rc       *********************************************" 2>&1 | tee -a $LOG
+  ;;
+
+  "startq")
+  # START serveur QUERY -----------------------------------------------
+  echo -e "\\n*********************** START QUERY HRACCESS le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************\\n" 2>&1 | tee -a $LOG
+  QUERY start
+  rc=$?
+  if ( [[ ${rc} = 1 ]] ) then
+    echo -e "KO : ECHEC DANS LE DEMARRAGE DU QUERY HRACCESS le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************" 2>&1 | tee -a $LOG
+  fi
+  echo -e "\\n*********************** FIN START QUERY HRACCESS le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************" 2>&1 | tee -a $LOG
+  echo -e "**********************************          RETOUR=$rc       ***********************************" 2>&1 | tee -a $LOG
+  ;;
+
+  "stop")
+  # STOP serveur FRONTAL APACHE --------------------------------------
+  # STOP serveur QUERY -----------------------------------------------
+  # STOP serveur OPENHR ----------------------------------------------
+  # STOP serveur CS --------------------------------------------------
+  echo -e "\\n*********************** STOP HRACCESS le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************\\n" 2>&1 | tee -a $LOG
+  QUERY stop
+  rc=$?
+  if ( [[ ${rc} = 0 ]] ) then
+    FRONTAL stop
+    rc=$?
+    if ( [[ ${rc} = 0 ]] ) then
+      OPENHR stop
+      rc=$?
+      if ( [[ ${rc} = 0 ]] ) then
+        CSAP0 stop
+        rc=$?
+      fi
+    fi
+  else
+    echo "KO : IMPOSSIBLE D'ARRETER LE QUERY."
+  fi
+  echo -e "\\n*********************** FIN STOP HRACCESS le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************" 2>&1 | tee -a $LOG
+  echo -e "**********************************          RETOUR=$rc       ***********************************" 2>&1 | tee -a $LOG
+  ;;
+
+  "stopq")
+  # STOP serveur QUERY -----------------------------------------------
+  echo -e "\\n*********************** STOP QUERY HRACCESS le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************\\n" 2>&1 | tee -a $LOG
+  QUERY stop
+  rc=$?
+  if ( [[ ${rc} = 1 ]] ) then
+    echo -e "KO : ECHEC DANS L'ARRET DU QUERY HRACCESS le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************" 2>&1 | tee -a $LOG
+  fi
+  echo -e "\\n*********************** FIN STOP QUERY HRACCESS le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************" 2>&1 | tee -a $LOG
+  echo -e "**********************************          RETOUR=$rc       ***********************************" 2>&1 | tee -a $LOG
+  ;;
+
+  "status")
+  echo -e "\\n*********************** STATUS HRACCESS $ENVI le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************\\n" 2>&1 | tee -a $LOG
+  nbrun=0
+
+  ORACLE
+  rc=$?
+  if ( [[ ${rc} = 0 ]] ) then
+    let nbrun=$nbrun+1
+  fi
+
+  for service in tomcat query openhr AP0
+  do
+    pid=`(RETOURPID ${service})`
+    if ( [[ "${pid}" ]] ) then
+      echo "################# Le service `echo ${service} | tr "[a-z]" "[A-Z]"` est demarre avec le PID : `(RETOURPID ${service})`" | tee -a ${LOG}
+      echo -e "Commande : `ps -ho cmd -p ${pid}`\\n " | tee -a ${LOG}
+      let nbrun=$nbrun+1
+    else
+      echo "XXXXXXXXXXXXXXXXX Le service `echo ${service} | tr "[a-z]" "[A-Z]"` n'est pas demarre." | tee -a ${LOG}
+    fi
+  done
+
+    if ( [[ "${nbrun}" == 5 ]] ) then
+      echo -e "\\n################# STATUT HRACCESS $ENVI OK : Les 5 services HRACCESS sont en fonctionnement." | tee -a ${LOG}
+      rc=0
+    else
+      if ( [[ "${nbrun}" == 0 ]] ) then
+        echo -e "\\nXXXXXXXXXXXXXXXXX STATUT HRACCESS $ENVI KO : Les 5 services HRACCESS sont arretes." | tee -a ${LOG}
+        rc=1
+      else
+        echo -e "\\nXXXXXXXXXXXXXXXXX STATUT HRACCESS $ENVI KO : Seulement ${nbrun} services sur 5 sont en fonctionnement." | tee -a ${LOG}
+        rc=$nbrun
+      fi
+    fi
+
+  echo -e "\\n*********************** FIN STATUS HRACCESS $ENVI le `date '+%d/%m/%Y a %Hh%Mm%Ss'` *************************" 2>&1 | tee -a $LOG
+  echo -e "**********************************         RETOUR=$rc        ************************************" 2>&1 | tee -a $LOG
+  ;;
+
+  *)
+  echo -e  $"Usage: $0 \\t{status|start|stop pour agir sur tous les composants HRa}\\n\\t\\t\\t{startq|stopq pour agir sur le query}"
+  rc=255
+  ;;
+
+esac
+exit ${rc}
+

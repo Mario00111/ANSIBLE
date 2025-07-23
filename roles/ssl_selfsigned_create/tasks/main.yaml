@@ -1,0 +1,39 @@
+###############################################################################
+#####################  SSL Configuration RIW              #####################
+###############################################################################
+
+- name: "Generate the private key file to sign the CSR"
+  openssl_privatekey:
+    path: "{{ file_ssl_pem }}"
+    passphrase: "{{ private_key_password }}"
+    cipher: aes256
+    size: 2048
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}" 
+    mode: 0644
+  when : name_host.find("riw") != -1
+
+- name: "Signature CSR methode manuelle" 
+  shell: 'su -l oracle -c "openssl req -new -key {{ file_ssl_pem }} -passin pass:{{ private_key_password }} -subj "/C=13/ST=FR/L=MARSEILLE/CN={{ name_host }}.cpr.sncf.fr" -out {{ file_ssl_csr }}"'
+  when : name_host.find("riw") != -1
+
+- name: "SSign the CSR file as a CA to turn it into a certificate CRT manuelle" 
+  shell: 'su -l oracle -c "openssl x509 -req -days 9999 -passin pass:{{ private_key_password }} -in {{ file_ssl_csr }} -signkey {{ file_ssl_pem }} -out {{ file_ssl_crt }}"'
+  when : name_host.find("riw") != -1
+
+- name: "Convert the signed certificate into a PKCS12 file with the attached private key MANUEL" 
+  shell: 'su -l oracle -c "openssl pkcs12 -export -in {{ file_ssl_crt }} -inkey {{ file_ssl_pem }} -out {{ file_ssl_p12 }} -name {{ inventory_hostname }} -CAfile {{ file_ssl_csr }} -caname root -passin pass:{{ private_key_password }} -passout pass:{{ private_key_password }}"'
+  when : name_host.find("riw") != -1
+
+- name: "Create Server JKS MANUEL" 
+  shell: 'su -l oracle -c "echo "{{ private_key_password }}" | /SOFT/oracle/java_current/bin/keytool -noprompt -importkeystore -srckeypass cprp13 -srckeystore {{ file_ssl_p12 }} -srcstoretype pkcs12  -srcalias {{ inventory_hostname }} -destkeystore {{ file_ssl_jks }} -keypass {{ private_key_password }} -storepass {{ private_key_password }}"'
+  when : name_host.find("riw") != -1
+
+- name: "Create Server JKS MANUEL" 
+  shell: 'su -l oracle -c "{ echo "changeit"; echo "{{ private_key_password }}"; } | /SOFT/oracle/java_current/bin/keytool -noprompt -importkeystore -srckeypass cprp13 -srckeystore {{ file_ssl_p12 }} -srcstoretype pkcs12  -srcalias {{ inventory_hostname }} -destkeystore {{ file_ssl_cacerts }}"'
+  when : name_host.find("riw") != -1
+  
+- name: Execution Create SSL
+  shell: 'su -l oracle -c "cd {{ folder_scripts }};{{ folder_scripts }}/createSSLConfig.sh {{ name_host }}_domain.properties"'
+  register: result
+  when : name_host.find("riw") != -1

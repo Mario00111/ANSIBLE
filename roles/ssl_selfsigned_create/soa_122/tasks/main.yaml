@@ -1,0 +1,32 @@
+# Installation soa 12.2
+
+- name: copie fichier response files weblogic sur vms cible
+  template:
+    src: soa_122.j2
+    dest: "{{ folder_install }}/soa_122.rsp"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence installateur soa 
+  stat:
+    path: "{{ folder_install }}/{{ version_soa }}"
+  register: installWL_found
+
+- name: Copie installeur soa
+  copy:
+   src: "{{ version_soa }}"
+   dest: "{{ folder_install }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+  when: not installWL_found.stat.exists
+
+- name: Test existence installation soa
+  stat:
+    path: "{{ folder_middleware_home }}"
+  register: WL_found
+
+- name: Installation soa  
+  command: "{{ folder_oracle }}/{{ version_jdk_short }}/bin/java -Xms1024m -Xmx1024m -Djava.io.tmpdir={{ folder_tmp }} -jar {{ folder_install }}/{{ version_soa }} -silent -novalidation -responseFile {{ folder_install }}/soa_122.rsp -invPtrLoc /etc/oraInst.loc"
+  become: yes
+  become_user: '{{ user_oracle }}'
+  when: WL_found.stat.exists

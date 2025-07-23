@@ -1,0 +1,44 @@
+# METHODE 3 
+# 
+# curl -s -d "username=svc_ansible&password=YK6*hTQSfttH" -H "Content-Type: application/x-www-form-urlencoded" -X POST http://centreon.cpr.sncf.fr/centreon/api/index.php?action=authenticate
+# 
+- name: Login centreon return token
+  command: |
+      curl -X POST "{{ centreon_api_url }}/centreon/api/index.php?action=authenticate" \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -d "username={{ centreon_username }}&password={{ centreon_password }}"
+  register: token_centreon
+  delegate_to: localhost
+  tags:
+      - Token_Debug
+      - Centreon_Token_jwt
+
+- name: Print service token
+  set_fact:
+    auth_token: "{{ token_centreon.stdout | from_json | json_query('authToken') }}"
+  tags:
+      - Token_Debug
+
+
+- name: Display extracted token
+  debug:
+    msg: "Extracted Token: {{ auth_token }}"
+
+- name: Del VM supervision in Centreon
+  command: |
+      curl -X POST "{{ centreon_api_url }}/centreon/api/index.php?action=action&object=centreon_clapi" \
+      -H "Content-Type: application/json" \
+      -H "Centreon-Auth-Token: {{ auth_token }}" \
+      -d '{
+            "action": "del",
+            "object": "host",
+            "values": "{{ new_host_name }}"
+        }'
+  register: del_host_response
+  delegate_to: localhost
+
+- name: Display API response
+  debug:
+      msg: "{{ new_host_name }} a ete supprimee de la supervision"
+  when: "'result' in del_host_response.stdout and del_host_response.rc == 0"
+  

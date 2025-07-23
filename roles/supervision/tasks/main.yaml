@@ -1,0 +1,17 @@
+- name: Include task Add vm centreon
+  include_role:
+    name: supervision
+    tasks_from: centreon_addvm.yaml
+  tags: 
+      - Centreon_add
+      - snmpd_conf
+      - snmpd_conf_start
+  when: action == "add"
+
+- name: Include task Del vm centreon
+  include_role:
+    name: supervision
+    tasks_from: centreon_delvm.yaml
+  tags: 
+      - Centreon_del
+  when: action == "del"

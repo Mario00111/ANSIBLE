@@ -1,0 +1,178 @@
+# METHODE 3 
+# 
+# curl -s -d "username=svc_ansible&password=YK6*hTQSfttH" -H "Content-Type: application/x-www-form-urlencoded" -X POST http://centreon.cpr.sncf.fr/centreon/api/index.php?action=authenticate
+# 
+- name: Create a directory if it does not exist
+  file:
+    path: "/etc/snmp/"
+    state: directory
+    mode: '0644'
+  tags: 
+    - snmpd_conf
+
+- name: Backup original snmpd.conf
+  copy:
+    src: /etc/snmp/snmpd.conf
+    dest: /etc/snmp/snmpd.conf.bak
+    remote_src: true
+  tags: 
+    - snmpd_conf
+
+- name: Backup original snmpd.conf
+  copy:
+    src: /etc/snmp/snmp.conf
+    dest: /etc/snmp/snmp.conf.bak
+    remote_src: true
+  igrore_errors: true
+  tags: 
+    - snmpd_conf
+
+- name: Copy snmp conf
+  copy:
+    src: "snmp.conf"
+    dest: "/etc/snmp/snmp.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  tags: 
+    - snmpd_conf
+
+- name: Restart snmpd service
+  service:
+    name: snmpd
+    state: restarted
+  tags: 
+    - snmpd_conf_start
+  
+- name: Login centreon return token
+  command: |
+      curl -X POST "{{ centreon_api_url }}/centreon/api/index.php?action=authenticate" \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -d "username={{ centreon_username }}&password={{ centreon_password }}"
+  register: token_centreon
+  delegate_to: localhost
+  tags:
+      - Token_Debug
+      - Centreon_Token_jwt
+
+- name: Print service token
+  set_fact:
+    auth_token: "{{ token_centreon.stdout | from_json | json_query('authToken') }}"
+  tags:
+      - Token_Debug
+
+- name: Display extracted token
+  debug:
+    msg: "Extracted Token: {{ auth_token }}"
+
+- name: Add new VM as a host in Centreon
+  command: |
+      curl -X POST "{{ centreon_api_url }}/centreon/api/index.php?action=action&object=centreon_clapi" \
+      -H "Content-Type: application/json" \
+      -H "Centreon-Auth-Token: {{ auth_token }}" \
+      -d '{
+            "action": "add",
+            "object": "host",
+            "values": "{{ new_host_name }};{{ new_host_name }};{{ new_host_ip }};{{ host_template }};{{ poller }};Linux-Servers"
+        }'
+  register: add_host_response
+  delegate_to: localhost
+
+- name: Display API response
+  debug:
+      msg: "{{ new_host_name }} a ete ajoute de la supervision"
+  when: add_host_response.rc == 0
+
+- name: Add param VM supervision in Centreon
+  command: |
+      curl -X POST "{{ centreon_api_url }}/centreon/api/index.php?action=action&object=centreon_clapi" \
+      -H "Content-Type: application/json" \
+      -H "Centreon-Auth-Token: {{ auth_token }}" \
+      -d '{
+            "action": "setparam",
+            "object": "host",
+            "values": "{{ new_host_name }};snmp_community;supervisioncpr"
+        }'
+  register: comparam_host_response
+  delegate_to: localhost
+
+- name: Display API response
+  debug:
+      msg: "Add param community OK pour {{ new_host_name }}"
+  when: comparam_host_response.rc == 0  
+
+- name: Add param VM supervision in Centreon
+  command: |
+      curl -X POST "{{ centreon_api_url }}/centreon/api/index.php?action=action&object=centreon_clapi" \
+      -H "Content-Type: application/json" \
+      -H "Centreon-Auth-Token: {{ auth_token }}" \
+      -d '{
+            "action": "setparam",
+            "object": "host",
+            "values": "{{ new_host_name }};snmp_version;2c"
+        }'
+  register: versionparam_host_response
+  delegate_to: localhost
+
+- name: Display API response
+  debug:
+      msg: "Add param version OK pour {{ new_host_name }}"
+  when: versionparam_host_response.rc == 0  
+
+# - name: Export configuration (apply changes)
+#   uri:
+#     url: "{{ centreon_api_url }}/centreon/api/index.php?action=action&object=centreon_clapi"
+#     method: POST
+#     headers:
+#       centreon-auth-token: "{{ auth_token }}"
+#     body_format: form-urlencoded
+#     body:
+#       action: applycfg
+#       object: poller
+#       values: "{{ poller }}"
+#     status_code: 200
+#   delegate_to: localhost
+  
+
+# - name: Export configuration (apply changes)
+#   command: |
+#     curl -X POST \
+#     -H "Content-Type: application/x-www-form-urlencoded" \
+#     -H "Centreon-Auth-Token: {{ auth_token }}" \
+#     --data-urlencode "action=applycfg" \
+#     --data-urlencode "object=poller" \
+#     --data-urlencode "values={{ poller }}" \
+#     "{{ centreon_api_url }}/centreon/api/index.php"
+#   delegate_to: localhost
+
+
+# - name: Show poller
+#   command: |
+#       curl -X POST "{{ centreon_api_url }}/centreon/api/index.php?action=action&object=centreon_clapi" \
+#       -H "Content-Type: application/json" \
+#       -H "Centreon-Auth-Token: {{ auth_token }}" \
+#       -d '{
+#             "action": "show",
+#             "object": "host",
+#             "values": "{{ new_host_name }};snmp_version;2c"
+#         }'
+#   register: versionparam_host_response
+#   delegate_to: localhost
+
+# - name: Add create services linked to the template too
+#   command: |
+#       curl -X POST "{{ centreon_api_url }}/centreon/api/index.php?action=action&object=centreon_clapi" \
+#       -H "Content-Type: application/json" \
+#       -H "Centreon-Auth-Token: {{ auth_token }}" \
+#       -d '{
+#             "action": "applytpl",
+#             "object": "host",
+#             "values": "{{ new_host_name }}"
+#         }'
+#   register: add_option_response
+
+# - name: Display API response
+#   debug:
+#       msg: "create services linked to the template too actif pour {{ new_host_name }}"
+#   when: add_option_response.rc == 0

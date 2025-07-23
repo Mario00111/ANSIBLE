@@ -1,0 +1,163 @@
+#- name: Removing any katello package
+#  yum:
+#    name: "*katello*"
+#    state: absent
+#  tags:
+#    - katello_install
+
+- name: Downloading katello agent
+  dnf:
+    name: "https://satellite.cpr.sncf.fr/pub/katello-ca-consumer-latest.noarch.rpm"
+    disable_gpg_check: yes
+    state: present
+  become: true
+  become_method: sudo
+  register: katello
+  tags:
+    - katello_install
+
+- name: Registering the system against Satellite
+  redhat_subscription:
+    state: present
+    activationkey: "KeyCPR"
+    org_id: "CPRPSNCF"
+  become: true
+  become_method: sudo
+  when:
+    - katello is success
+  tags:
+    - katello_install
+
+- name: Enable all repositories starting with satellite-6*
+  rhsm_repository:
+    name: satellite-tools-6.*-for-rhel-8-x86_64-rpms
+    state: enabled
+
+- name: Checking active YUM repositories
+  shell: yum repolist | grep -v This | grep server
+  register: repolist
+  failed_when: repolist == 1
+  become: true
+  become_method: sudo
+  tags:
+    - katello_install
+
+- name: Installing katello-agent
+  dnf:
+    name: katello-agent
+    state: present
+  become: true
+  become_method: sudo
+  tags:
+    - katello_install
+
+- name: DNF update the system
+  dnf:
+    name:  "java-1.8.0-openjdk-headless-1.8.0.412.b08-2.el8.x86_64"
+    state: absent
+  tags: 
+    - package_delete
+
+- name: Install tools packages
+  dnf:
+    name:
+      - '@Development Tools'
+      - llvm-toolset
+      - libnsl
+      - java-17-openjdk.x86_64
+      - ksh  
+    state: latest
+  tags:
+      - package
+
+- name: DNF update the system
+  dnf:
+    name:  "*"
+    state: latest
+  tags:
+      - package
+
+- name: creation repertoires
+  file:
+    path: '{{ item }}'
+    state: 'directory'
+    owner: "{{ user_1 }}" 
+    group: "{{ group_1_name }}" 
+    mode: '755'
+  loop:
+    - '{{ folder_hra }}'
+    - '{{ folder_cobol }}'
+    - '{{ folder_tomcat }}'
+  tags:
+      - folder_tomcat
+
+- name: creation repertoires
+  file:
+    path: '{{ item }}'
+    state: 'directory'
+    owner: "{{ user_2 }}" 
+    group: "{{ group_2_name }}" 
+    mode: '755'
+  loop:
+    - '{{ folder_oracle }}'
+  tags:
+      - folder_tomcat
+  
+- name: install tools oracle client
+  unarchive:
+    src: '{{ folder_local_app }}/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_2 }}" 
+    group: "{{ group_2_name }}" 
+    mode: '755'
+  tags:
+      - dezip    
+
+- name: install tools oracle precomp
+  unarchive:
+    src: '{{ folder_local_app }}/instantclient-precomp-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_2 }}" 
+    group: "{{ group_2_name }}" 
+    mode: '755'
+  tags:
+      - dezip
+
+- name: install tools oracle sqlplus
+  unarchive:
+    src: '{{ folder_local_app }}/instantclient-sqlplus-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_2 }}" 
+    group: "{{ group_2_name }}" 
+    mode: '755'
+  tags:
+      - dezip
+
+- name: install tools oracle 
+  unarchive:
+    src: '{{ folder_local_app }}/instantclient-tools-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_2 }}" 
+    group: "{{ group_2_name }}" 
+    mode: '755'
+  tags:
+      - dezip
+
+- name: install tomcat 
+  unarchive:
+    src: '{{ folder_local_app }}/apache-tomcat-9.0.95.tar.gz'
+    dest: '{{ folder_tomcat }}'
+    owner: "{{ user_1 }}" 
+    group: "{{ group_1_name }}" 
+    mode: '755'
+  tags:
+      - dezip_tomcat
+
+- name: change dossier tomcat
+  file:
+    path: '{{ folder_tomcat }}/apache-tomcat-9.0.95'
+    owner: "{{ user_1 }}" 
+    group: "{{ group_1_name }}" 
+    mode: '755'
+  tags:
+      - dezip_tomcat

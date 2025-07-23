@@ -1,0 +1,47 @@
+environnement: "QUA"
+environnement_short: "QUA"
+#################################
+########### Network #############
+#################################
+# network type
+# SRV-PROD
+# SRV_PROD167
+# SRV-NONPROD
+# SRV-NONPROD80
+# Production
+# NET-INTEROPS
+# NET-APPS-QUA
+# DMZ-APPS-QUA
+# Interne..
+network_type: "{{ subnet }}"
+### netmask plage 192.X.X.X 255.255.255.0 
+# INTEROPS/DMZ 255.255.255.192
+### netmask plage 126.X.X.X
+# cpr_netmask: 255.0.0.0
+cpr_netmask_DMZ: 255.255.255.192
+cpr_netmask_NET: 255.255.255.0
+cpr_netmask: "{{ cpr_netmask_NET if 'NET' in subnet else cpr_netmask_DMZ if 'DMZ' in subnet }}"
+
+### gateway plage 192.X.X.X 
+# PROD 167 => 192.168.167.254 
+# PROD 166 => 192.168.166.254
+# NON PROD 168 => 192.168.168.254
+# NET-INTEROPS => 192.168.83.62
+# NET-APPS-QUA => 192.168.122.254
+# DMZ-APPS-QUA => 10.4.1.129
+cpr_gateway_DMZ: 10.4.1.129
+cpr_gateway_NET: 192.168.122.254
+cpr_gateway: "{{ cpr_gateway_NET if 'NET' in subnet else cpr_gateway_DMZ if 'DMZ' in subnet }}"
+
+# domain cpr.sncf.fr / cpr.local
+cpr_domain: "cpr.local"
+cpr_domain_all: "cpr.local cpr.sncf.fr"
+# dns (old 126.51.81.54/126.51.81.56 )
+cpr_dns_servers1: 192.168.169.10
+cpr_dns_servers2: 192.168.169.11
+
+# Systeme var ram et cpu param dans [DF].yaml
+
+# vcenter folder
+folder_vcenter: 'ENV QUA'
+# VLAN

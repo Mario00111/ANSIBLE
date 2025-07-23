@@ -1,0 +1,110 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+# Systeme var ram et cpu
+ram_var: '8192'
+cpu_var: '4'
+########################## VAR EPP ##########################
+# Application attributes de Espace Personnel
+tag: "EPP"
+name: "EspacePersonnel"
+domaine: "DSIO-RA"
+composant: "Liferay"
+techno: "Liferay"
+desc: "L'espace personnel est le portail dédié aux individus (personnels SNCF, ayant-droits) affiliés aux régimes maladie et vieillesse."
+
+# repertoire des logs de l'application Espace Personnel - FluentBit
+log_dir:
+  application_input_1:
+    path: /datas/espace_personnel/cas/logs/cas*.log
+    tag: EPP_CAS
+    composant: EPP_CAS
+    parser: multiline-regex-cas
+  application_input_2:
+    path: /opt/liferay-ce-portal-7.3.6-ga7/tomcat-9.0.40/logs/*.log
+    tag: EPP_Liferay
+    composant: EPP_Liferay
+    parser: java
+  application_input_3:
+    path: /opt/liferay-ce-portal-7.3.6-ga7/tomcat-9.0.40/logs/catalina.out
+    tag: EPP_Liferay_catalina
+    composant: EPP_Liferay_catalina
+    parser: java
+  server_input_1:
+    path: /var/log/*/secure*.log
+    tag: EPP_server
+    composant: EPP_server
+    parser: java
+
+# config pour grafana agent
+log_dir_grafana_agent:
+  server_input_1: 
+    path: /datas/log/mut/
+    exclude_path: /datas/log/mut/*[0-9][0-9]*
+  server_input_2: 
+    path: /u01/domains/{{ ansible_hostname }}_domain/servers/ManagedServer_1/logs/ManagedServer_1.log
+
+
+###############################################################################
+#####################     FICHIER PARAMETRES DEVOPS QUA   #####################
+###############################################################################
+# VG / LV Config
+vg_name_dk: 'vg-docker'
+lv_name_dk: 'docker'
+mount_name_dk: '/var/lib/docker'
+
+vg_name_misc : 'vg-misc'
+
+lv_name_data: 'data'
+mount_name_data: 'data'
+
+lv_name_exploit: 'exploit'
+mount_name_exploit: 'exploit'
+
+# Vmware custom attributes
+custom_1_name: "Contact metier"
+custom_1_value: "admintot@cprpsncf.fr"
+custom_2_name: "Plage de maintenance"
+custom_2_value: "12/24h"
+
+# Tags attributes
+tag_app: "EPP"
+tag_env: "QUA"
+tag_midd: "DK"
+
+# repertoire
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+# VLAN
+
+
+###############################################################################
+###############    VARIABLES APPLICATIVES PARTAGEES CAS/EP   ##################
+###############################################################################
+EP_CAS_PORTAL_LEGACY_CLIENT_ID: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  66373537643730333363383362353161633665646462623839633861363066336163653830383732
+  3931336531646164343362356165383161653831656266380a343136356163666166383762386237
+  66633835373630383962646438653231613432346661373866393133633338333634313461633933
+  3361643563376265370a303730653161326432343534643362366635613239386464363866653630
+  32393830633563623233353236336561313235306161333264636234383664396435666365393937
+  6533333033353931336532343333373836633732646366663035
+EP_CAS_PORTAL_LEGACY_CLIENT_SECRET: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  30313132613930353733316364626164623762356664316462646134326465353735656434393764
+  6663616139373361666561303836393938373433616439320a376130636439323963303331356464
+  37373731323661353535376430626432353161333333666535303238366164343562396535326634
+  6366636665643334620a313065383339376465666630303835346262343838366633626138306666
+  30343030653331383539373362393433356562396635653564383739343036303161313765643331
+  6361386439623637366532666339376538393438323964323266
+EP_CAS_SERVICE_ACCOUNT_CLIENT_SECRET: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  37663031656435306365313231666438386564376338646437303463323666373339633761663165
+  3764356164633939393765666436396531656139336362350a373863373134343565336364626232
+  62636161373233626336326265373334323565623761383066393463653361626538626138373038
+  6361376439396136630a636161656264653832363764646464656536393465376135346563623766
+  37626137623362313537303465316639343461346636666363636133666132663036373364653161
+  6636353639363935323838306633336430383832373836316237

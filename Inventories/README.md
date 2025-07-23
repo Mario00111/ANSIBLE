@@ -1,0 +1,1 @@
+# ATTENTION: Ce repertoire liste les inventaires des actifs (hosts) pour le déploiement d'application. Ce projet est partagé à plusieurs autres projets. 

@@ -1,0 +1,15 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+
+########################## VAR ENIM ##########################
+# Application attributes de Espace Personnel Enim
+tag: "ENIM"
+name: "Espace Personnel Enim"
+domaine: "DSIO-RA"
+composant: "Liferay Portal ENIM"
+techno: "Liferay Portal ENIM"
+desc: "La CPRPSNCF assure l'hébergement et la maintenance de l'espace personnel dédié aux assurés de l'ENIM."
+# VLAN

@@ -1,0 +1,141 @@
+#!/bin/bash
+#menu.sh
+############################### Initialisation des variables #################################
+#+ Mode normal
+ResetColor="$(tput sgr0)"
+# "Surligné(bold)
+bold="$(tput smso)"
+# "Non-Surligné(offbold)
+offbold="$(tput rmso)"
+
+user=`whoami`
+
+host=$HOSTNAME
+
+DOMAIN_HOME="/u01/domains/"$host"_domain"
+
+PID_NM=`ps -eaf | grep weblogic.NodeManager | grep -v grep | awk '{print $2}'`
+PID_AD=`ps -eaf | grep Dweblogic.Name=AdminServer | grep -v grep | awk '{print $2}'`
+PID_MS=`ps -eaf | grep Dweblogic.Name=ManagedServer_1 | grep -v grep | awk '{print $2}'`
+
+CACHE_ADMIN="$DOMAIN_HOME/servers/AdminServer/cache"
+TMP_ADMIN="$DOMAIN_HOME/servers/AdminServer/tmp"
+CACHE_MS="$DOMAIN_HOME/servers/ManagedServer_1/cache"
+TMP_MS="$DOMAIN_HOME/servers/ManagedServer_1/tmp"
+ADLogs="$DOMAIN_HOME/servers/AdminServer/logs"
+
+CHANGE=$(stat $ADLogs/AdminStart.out | grep Change)
+CHANGE_NEW=$(stat $ADLogs/AdminStart.out | grep Change)
+
+
+alias start='/u01/scripts/start.sh'
+alias stop='/u01/scripts/stop.sh'
+
+shopt -s  expand_aliases
+
+################################ Fonction ################################# 
+function stopstartDomain
+{
+quel_domain=$1
+
+stop $quel_domain ALL
+cleanFolder 
+start $quel_domain ALL
+searchModifLog
+
+}
+
+function CleanFolder
+{
+
+if [ -d $CACHE_ADMIN ];
+        then
+        cd $CACHE_ADMIN
+        rm -Rf *
+        echo "rm sous cache Adminserver : OK"
+        fi
+        if [ -d $TMP_ADMIN ];
+        then
+        cd $TMP_ADMIN
+        rm -Rf *
+        rm -Rf .internal
+        rm -Rf .app*
+        echo "rm sous tmp Adminserver : OK"
+        fi
+        if [ -d $CACHE_MS ];
+        then
+        cd $CACHE_MS
+        rm -Rf *
+        echo "rm sous cache ManagdeServer : OK"
+        fi
+        if [ -d $TMP_MS ];
+        then
+        cd $TMP_MS
+        rm -Rf *
+        rm -Rf .internal
+        rm -Rf .app*
+        echo "rm sous cache ManagdeServer :  OK"
+fi
+	
+}
+
+function SearchModifLog
+{
+       while [ "${CHANGE}" = "${CHANGE_NEW}" ]
+       do
+       CHANGE_NEW=$(stat $ADLogs/AdminStart.out | grep Change) 
+       done
+
+       ADMIN_OK=$(grep "Procedure terminee." $ADLogs/AdminStart.out)
+       while [ "${ADMIN_OK}" != "Procedure terminee." ]
+       do
+       ADMIN_OK=$(grep "Procedure terminee." $ADLogs/AdminStart.out)
+       done
+}
+
+##########################################################################################
+############################### Effacement du terminal ###################################
+clear
+##########################################################################################
+############################# controle du user ###########################################
+
+if [ "$user" != "oracle" ]
+then 
+echo "Merci de vous connecter avec le user oracle, vous etes actuellement en $user"
+exit 1
+fi
+##########################################################################################
+############################## Affichages menu ###########################################
+while true; do
+domain=${host:(-3)}
+echo "*********************************"
+echo "** MENU ARRET RELANCE WEBLOGIC **"
+echo "**   >>> DOMAINE ${domain^^} <<<       **"  
+echo "*********************************"
+echo ""
+Mainmenu_options=("Stop Domain" "Start Domain" "Stop/Start Domain" "Stop ManagedServer1" "Start ManagedServer1" "Stop ManagedServer2" "Start ManagedServer2" "Stop AdminServer" "Start AdminServer" "Stop NodeManager" "Start NodeManager" "Quitter")
+select Mainmenu in "${Mainmenu_options[@]}"
+    do
+    case $REPLY in
+                1) stop ALL ;;
+                2) start ALL ;;
+                3) stop ALL
+                   CleanFolder
+                   start ALL ;;
+                4) stop MS1 ;;
+                5) start MS1 ;;
+                6) stop MS2 ;;
+                7) start MS2 ;;
+                8) stop AD ;;
+                9) start AD ;;
+                10) stop NM  ;;
+                11) start NM ;;
+                12) break 2 ;;
+                *) echo 'Merci de choisir une option.' >&2
+    esac
+    break
+   done
+done
+##########################################################################################
+##########################################################################################
+

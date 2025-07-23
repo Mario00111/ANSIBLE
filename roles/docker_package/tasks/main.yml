@@ -1,0 +1,76 @@
+- name: Install aptitude
+  apt:
+    name: aptitude
+    state: latest
+    update_cache: true
+      
+- name: Ensure older versions of docker are uninstalled
+  apt:
+    name:
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+    state: absent
+
+- name: Install docker packages
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - lsb-release
+      - python3-pip
+      - python3-setuptools
+      - gnupg
+      - curl
+      - software-properties-common
+    state: latest
+  tags:
+      - docker
+
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ folder_docker_keyring }}"
+    state: directory
+    mode: '0755'
+
+- name: Add Docker apt repository key.
+  ansible.builtin.get_url:
+    url: "{{ docker_repo_key_url }}"
+    dest: /etc/apt/trusted.gpg.d/docker.asc
+    mode: '0644'
+    force: true
+
+- name: Add Docker apt repository.
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/debian bullseye stable"
+    state: present
+    update_cache: true
+    
+- name: Install the Docker Engine
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+
+- name: Start and Enable docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Update apt repositories and cache on server
+  apt:
+    update_cache: yes
+    force_apt_get: yes
+    cache_valid_time: 3600
+
+- name: Upgrade all packages on server
+  apt:
+    upgrade: dist
+    force_apt_get: yes

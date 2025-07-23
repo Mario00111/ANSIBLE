@@ -1,0 +1,94 @@
+# Deploiement domaine weblogic
+
+- name: copie script vm admin weblo
+  copy:
+   src: "{{ item }}"
+   dest: "{{ folder_scripts }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+   mode: 0755
+  with_items:
+   - createDomain.py
+   - createDomain.sh
+   - createJNDI.py
+   - createJNDI.sh
+   - deployApp.py
+   - deployApp.sh
+   - kraow.sh
+   - startAD.py
+   - startMS.py
+   - start.sh
+   - stopAD.py
+   - stopMS.py
+   - stopNM.py
+   - stop.sh
+   - updateDomain.py
+
+- name: insertion domaine properties
+  template:
+    src: domain.j2
+    dest: "{{ folder_scripts }}/domain.properties"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: copie du deploy.sh
+  template:
+    src: deploy.sh
+    dest: "{{ folder_scripts }}"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+    mode: 0755
+
+- name: suppression domaine si existant
+  file: path={{ folder_domain }} state=absent
+
+- name: Execution creation domaine
+  shell: 'su -l oracle -c "cd {{ folder_scripts }};{{ folder_scripts }}/createDomain.sh {{ folder_scripts }}/domain.properties"'
+  register: result
+
+- name: correction listen address nodemanager
+  lineinfile:
+    path: "{{ folder_domain }}/nodemanager/nodemanager.properties"
+    backup: yes
+    regexp: "^ListenAddress=(.+?)$"
+    line: "ListenAddress={{ inventory_hostname.split('.')[0] }}"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: activation du mode quit du node manager
+  lineinfile:
+    path: "{{ folder_domain }}/nodemanager/nodemanager.properties"
+    regexp: '^QuitEnabled=false'
+    line: 'QuitEnabled=true'
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: copie du setUserOverrides.sh 
+  template:
+    src: setUserOverrides.sh
+    dest: "{{ folder_domain }}/bin"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}" 
+    mode: 0755 
+
+- name: Suppression repertoires servers/AdminServer
+  file: path={{ folder_domain }}/servers/AdminServer/{{ item }} state=absent
+  with_items: 
+   - tmp
+   - logs
+   - stage
+   - cache
+
+- name: Compression du domaine sur VM1
+  archive:
+    path: "{{ folder_domain }}"
+    dest: "{{ folder_domains }}/domain.gz"
+    format: gz 
+
+- name: download du domain.gz vers controller ansible
+  fetch:
+   src: "{{ folder_domains }}/domain.gz"
+   dest: "/home/ansible/playbooks/roles/copiedomaine/files/"
+   flat: yes
+   fail_on_missing: yes
+

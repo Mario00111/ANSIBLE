@@ -1,0 +1,112 @@
+# Arret / Archive / Suppression / Deploiement domaine weblogic
+
+- name: Existence du domaine
+  stat:
+    path: "{{ folder_domain }}"
+  register: Domain_found
+
+- name: Stop domaine
+  shell: 'su -l oracle -c "{{ folder_scripts }}/stop.sh ALL"'
+  register: grep_result
+  ignore_errors: yes
+  when: Domain_found.stat.exists
+
+- name: Suppression repertoires tmp logs stage cache /servers
+  file: path={{ folder_domain }}/servers/*/{{ item }} state=absent
+  with_items: 
+   - tmp
+   - stage
+   - cache
+  when: Domain_found.stat.exists
+
+- name: Compression du domaine
+  archive:
+    path: "{{ folder_domain }}"
+    dest: "{{ folder_sas_archive }}/domain.gz"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+    format: gz
+  when: Domain_found.stat.exists
+
+- name: Suppression domaine
+  file: path={{ folder_domain }} state=absent
+  when: Domain_found.stat.exists
+
+- name: copie script vm admin weblo
+  copy:
+   src: "{{ item }}"
+   dest: "{{ folder_scripts }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+   mode: 0755
+  with_items:
+   - createDomain.py
+   - createDomain.sh
+   - createJNDI.py
+   - createJNDI.sh
+   - deployApp.py
+   - deployApp.sh
+   - deployAuto.sh
+   - kraow.sh
+   - startAD.py
+   - startMS.py
+   - start.sh
+   - stopAD.py
+   - stopMS.py
+   - stopNM.py
+   - stop.sh
+   - updateDomain.py
+
+- name: insertion domaine properties
+  template:
+    src: "{{ name_host }}_domain.properties"
+    dest: "{{ folder_scripts }}"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Execution creation domaine
+  shell: 'su -l oracle -c "cd {{ folder_scripts }};{{ folder_scripts }}/createDomain.sh {{ folder_scripts }}/{{ name_host }}_domain.properties"'
+  register: result
+
+- name: correction listen address nodemanager
+  lineinfile:
+    path: "{{ folder_domain }}/nodemanager/nodemanager.properties"
+    backup: yes
+    regexp: "^ListenAddress=(.+?)$"
+    line: "ListenAddress={{ name_host }}"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: activation du mode quit du node manager
+  lineinfile:
+    path: "{{ folder_domain }}/nodemanager/nodemanager.properties"
+    regexp: '^QuitEnabled=false'
+    line: 'QuitEnabled=true'
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: copie du setUserOverrides.sh 
+  template:
+    src: setUserOverrides.j2
+    dest: "{{ folder_domain }}/bin/setUserOverrides.sh"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}" 
+    mode: 0755 
+
+- name: copie des properties utiles 
+  shell: 'su -l oracle -c "cp {{ folder_sas_Properties }}/*.* {{ folder_domain }}/"'
+  register: result
+
+- name: copie des librairies utiles 
+  shell: 'su -l oracle -c "cp {{ folder_sas_Lib }}/*.* {{ folder_domain }}/lib/"'
+  register: result
+
+- name: Start domaine
+  shell: 'su -l oracle -c "{{ folder_scripts }}/start.sh ALL"'
+  register: grep_result
+  ignore_errors: yes
+
+- name: Execution deploy Auto
+  shell: 'su -l oracle -c "cd {{ folder_scripts }};{{ folder_scripts }}/deployAuto.sh"'
+  register: result
+

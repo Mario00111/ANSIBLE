@@ -1,0 +1,200 @@
+#!/bin/bash
+#Script de deploiement de livrable
+
+################### Parametrage variables ##########################
+####################################################################
+
+#Nom domaine fonctionnel
+Name_DF="RIT_CPRJMS"
+
+#Nom serveur cible
+Name_SC="ManagedServer_1"
+
+#Fichier properties
+Name_Fic_App_ToDeploy="/u01/scripts/domain.properties"
+
+#Repertoire config
+Folder_destpathproperties="/u01/domains/config/$Name_DF"
+
+#Sas de deploiement
+Sas_Deploy=/u01/scripts/sas_deploy
+
+####################################################################
+
+################### Initialisation des variables ###################
+
+# Mode normal
+ResetColor="$(tput sgr0)"
+# Surlign(bold)
+boldon="$(tput smso)"
+boldoff="$(tput rmso)"
+
+#Nom user connect
+user=`whoami`
+
+#Declaration tableaux
+declare -A Tab_Filename
+declare -a Tab_Filename_Short
+
+#Vidage fichier temporaire et ajout balise APPLICATIONS
+echo '' > fictmp.properties 
+sed -i '1i[APPLICATIONS]' fictmp.properties
+
+#sauvegarde su fichier properties et suppression apres balise apllications
+sed -i.BAK '/\[APPLICATIONS\]/,$d' $Name_Fic_App_ToDeploy
+
+################################ Fonction ################################# 
+
+function Load_Fic_Properties {
+# Parcours du sas de deploiement
+find -L $Sas_Deploy -type f | ( while read File; do
+{
+	
+         
+	# Nom complet en absolu du fichier 
+	Fullfilename=$(basename $File)
+	# Extension du fichier
+        Extension=${Fullfilename##*.}
+	# Nom du fichier sans le chemin
+        Filename=${Fullfilename%.*}
+	# Nom du fichier court sans extension ni versionning
+	# Parcours le filename match sur les fichiers AA-BB-Ccccc-[0-9] puis decoupe AA-BB-Ccccc
+	Filename_short=$(echo $Fullfilename |  awk 'match($0,/^[A-Z]{2}-[A-Z]{2}-[A-Z][a-z]+-[0-9]/) {print substr($0,RSTART,RLENGTH-2)} ')
+	# Chargement tableaux nom complet/nom court        	
+	if [[ $Filename_short != '' ]]
+	then 	
+		Tab_Filename[$i]=$Fullfilename
+		Tab_Filename_Short[$i]=$Filename_short
+		printf "%-40s %-50.9s \n" "$Fullfilename" "OK"
+	else
+		i=$i-1
+		printf "%-40s %-50s \n" "$Fullfilename" "KO Erreur dans le nom de fichier ?"
+	fi
+((i++))
+}
+done
+j=0
+l=1
+for Object_ToDeploy in "${Tab_Filename_Short[@]}"; do
+	if [[ $Object_ToDeploy != '' ]]
+	then
+		# Le livrable avec properties oui ou non
+		Properties_YesOrNo=$(echo ${Tab_Filename_Short[@]} | tr " " "\n" | grep "$Object_ToDeploy$" | wc -l)
+		if [[ $Properties_YesOrNo = '2' ]]
+		then
+{% raw %}
+			for ((k=(($j+1));k<=${#Tab_Filename_Short[@]};k++))
+			do
+				if [[ $Object_ToDeploy = ${Tab_Filename_Short[$k]} ]]
+                                then
+                                # ecriture dans fictmp des parametres de l'appli + properties
+                                        echo "app$l.name=$Object_ToDeploy" >> fictmp.properties
+                                        if [[ ${Tab_Filename[$k]} =~ "properties"  ]]
+                                        then
+                                                echo "app$l.path=$Sas_Deploy/${Tab_Filename[$j]}" >> fictmp.properties
+                                        else
+                                                echo "app$l.path=$Sas_Deploy/${Tab_Filename[$k]}" >> fictmp.properties
+                                        fi
+                                        echo "app$l.destpath=$Name_DF" >> fictmp.properties
+                                        echo "app$l.targets=$Name_SC" >> fictmp.properties
+                                        if [[ ${Tab_Filename[$k]} =~ "properties"  ]]
+                                        then
+                                                echo "app$l.pathproperties=$Sas_Deploy/${Tab_Filename[$k]}" >> fictmp.properties
+                                        else
+                                                echo "app$l.pathproperties=$Sas_Deploy/${Tab_Filename[$j]}" >> fictmp.properties
+                                        fi
+                                        echo "app$l.destpathproperties=$Folder_destpathproperties" >> fictmp.properties
+                                        echo -e "\n" >> fictmp.properties
+                                ((l++))
+                                fi
+			done
+		elif [[ $Properties_YesOrNo = '1' ]]
+		then
+		# ecriture dans fictmp des parametres de l'appli sans properties
+			echo "app$l.name=$Object_ToDeploy" >> fictmp.properties
+			echo "app$l.path=$Sas_Deploy/${Tab_Filename[$j]}" >> fictmp.properties
+			echo "app$l.destpath=$Name_DF" >> fictmp.properties
+			echo "app$l.targets=$Name_SC" >> fictmp.properties
+			echo "app$l.pathproperties=" >> fictmp.properties
+                        echo "app$l.destpathproperties=" >> fictmp.properties
+			echo -e "\n" >> fictmp.properties
+		((l++))
+		fi
+	fi
+((j++))
+done
+{% endraw %}
+)
+if [[ $(stat -c "%s" fictmp.properties) != '' ]]
+then 
+	# Copie de fictmp dans le fichier [XXX]_domain.properties
+	cat fictmp.properties >> $Name_Fic_App_ToDeploy
+	Deploy_Ready="TRUE"
+else
+	Deploy_Ready="FALSE"
+fi
+
+}
+
+
+function Entete_Liste()
+{
+        echo -e "\n"
+        echo "****************************************************************"
+        echo "Les fichiers a deployer doivent respecter la syntaxe suivante :"
+        echo -e "\033[31m ${boldon}[NomCourtApplication]-[NomService]-[NomApplication]-[Versionning].[ear/war/properties]${boldoff} \033[0m"
+        echo -e "\033[31m ${boldon}[NomCourtApplication]${boldoff} \033[0m : 2 caracteres majuscules alphabetiques"
+        echo -e "\033[31m ${boldon}[NomService]${boldoff} \033[0m : 2 caracteres majuscules alphabetiques"
+        echo -e "\033[31m ${boldon}[NomApplication]${boldoff} \033[0m : X caracteres alphanumeriques"
+        echo -e "\033[31m ${boldon}[Versionning]${boldoff} \033[0m : 3 caracteres numeriques separes par ."
+        echo -e "****************************************************************\n"
+        echo -e "Liste des applications : \n"
+}
+
+function confirm()
+{
+    read -r -p "Deployer les applications disponibles [y/N] :" response
+
+    case "$response" in
+        [yY][eE][sS]|[yY]) 
+            true
+            ;;
+	n|N)
+	exit 1
+	    ;;
+        *)
+            false
+            ;;
+    esac
+}
+
+
+
+##########################################################################################
+############################### Effacement du terminal ###################################
+clear
+##########################################################################################
+############################# controle du user ###########################################
+
+if [ "$user" != "oracle" ]
+then 
+echo "Merci de vous connecter avec le user oracle, vous etes actuellement en $user"
+exit 1
+fi
+
+##########################################################################################
+############################## Traitement      ###########################################
+i=0
+# Fonction de chargement du fichier properties
+Entete_Liste
+Load_Fic_Properties
+echo -e "\n"
+if [[ $Deploy_Ready = 'TRUE' ]] && confirm ;
+then
+	#./testDeploy.sh $Name_Fic_App_ToDeploy
+	./deployApp.sh $Name_Fic_App_ToDeploy
+else
+	echo 'Deploiement interrompu'
+fi
+##########################################################################################
+##########################################################################################

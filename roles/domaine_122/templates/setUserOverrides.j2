@@ -1,0 +1,20 @@
+#!/bin/bash
+echo "Setting from UserOverrides.sh"
+
+# global settings (for all managed servers)
+export JAVA_OPTIONS="$JAVA_OPTIONS -Dweblogic.MaxMessageSize=300000000"
+
+# customer settings for each Server
+if [ "${SERVER_NAME}" = "AdminServer" ]
+then
+   echo "Customizing USER_MEM_ARGS for SERVER_NAME ${SERVER_NAME}"
+   export USER_MEM_ARGS="-Xms256m -Xmx512m"
+   export JAVA_OPTIONS="$JAVA_OPTIONS -Djava.security.egd=file:/dev/./urandom -Dweblogic.security.SSL.ignoreHostnameVerification=true -Djava.endorsed.dirs=/SOFT/oracle/java_current/jre/lib/endorsed:/SOFT/oracle/wls_122130/oracle_common/modules/endorsed -Djava.awt.headless=true"
+else
+   echo "Customizing USER_MEM_ARGS for SERVER_NAME ${SERVER_NAME}"
+   export USER_MEM_ARGS="-Xms2048m -Xmx2048m "
+   export JAVA_OPTIONS="$JAVA_OPTIONS -Djava.endorsed.dirs=/SOFT/oracle/java_current/lib/endorsed\:/SOFT/oracle/wls_122130/oracle_common/modules/endorsed -Dweblogic.security.SSL.ignoreHostnameVerification=false -Dweblogic.ReverseDNSAllowed=false -Djava.security.egd=file\:/dev/./urandom -Djava.awt.headless=true -Dweblogic.Name=${SERVER_NAME} -XX:+PrintGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:/datas/log/${SERVER_NAME}/logs/gc.log -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=50m -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,address=8453,server=y,suspend=n -Djava.compiler=NONE -Dweblogic.debug.DebugJNDI=true -Dcom.sun.xml.ws.transport.http.HttpAdapter.dump=true -Xverify:none"
+   POST_CLASSPATH="${POST_CLASSPATH} /SOFT/oracle/java_current/lib/tools.jar\:/SOFT/oracle/wls_122130/wlserver/server/lib/weblogic_sp.jar\:/SOFT/oracle/wls_122130/wlserver/server/lib/weblogic.jar\:/SOFT/oracle/wls_122130/wlserver/server/lib/webservices.jar\:/SOFT/oracle/wls_122130/wlserver/../oracle_common/modules/org.apache.ant_1.7.1/lib/ant-all.jar\:/SOFT/oracle/wls_122130/wlserver/../oracle_common/modules/net.sf.antcontrib_1.1.0.0_1-0b2/lib/ant-contrib.jar\:/SOFT/oracle/wls_122130/wlserver/modules/features/oracle.wls.common.nodemanager_1.0.0.0.jar\:\:/SOFT/oracle/wls_122130/wlserver/common/derby/lib/derbynet.jar\:/SOFT/oracle/wls_122130/wlserver/common/derby/lib/derbyclient.jar\:/SOFT/oracle/wls_122130/wlserver/common/derby/lib/derby.jar\:/SOFT/oracle/wls_122130/wlserver/server/lib/xqrl.jar"
+   echo "Customizing POSTCLASSPATH ${POST_CLASSPATH}"
+   export POST_CLASSPATH
+fi

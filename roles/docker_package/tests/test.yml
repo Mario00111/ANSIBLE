@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  remote_user: root
+  roles:
+    - tomcat-ansible-role
+
+- name: play with disconnected remote
+  hosts: localhost
+  remote_user: root
+  vars:
+    tomcat_remote_is_disconnected: True
+  roles:
+    - tomcat-ansible-role  
+  

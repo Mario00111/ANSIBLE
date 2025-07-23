@@ -1,0 +1,22 @@
+- name: Ensure DEV vSphere tag exists
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Retrieve existing tags
+      community.vmware.tag_info:
+        hostname: "{{ vmware_hostname }}"
+        username: "{{ vmware_user }}"
+        password: "{{ vmware_pass }}"
+        validate_certs: false
+      register: vsphere_tags
+
+    - name: Create DEV tag if it does not exist
+      community.vmware.tag:
+        hostname: "{{ vmware_hostname }}"
+        username: "{{ vmware_user }}"
+        password: "{{ vmware_pass }}"
+        validate_certs: false
+        category_name: Environnement
+        tag_name: DEV
+        state: present
+      when: "'DEV' not in vsphere_tags.tags | map(attribute='name') | list"

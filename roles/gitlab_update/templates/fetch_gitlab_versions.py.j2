@@ -1,0 +1,31 @@
+import requests
+import yaml
+
+GITLAB_API_URL = "https://gitlab.com/api/v4/projects/gitlab-org%2Fgitlab/releases"
+
+def get_gitlab_versions():
+    response = requests.get(GITLAB_API_URL)
+    if response.status_code == 200:
+        versions = [release['tag_name'] for release in response.json()]
+        versions.sort()
+        return versions
+    else:
+        print("Erreur lors de la récupération des versions GitLab.")
+        return []
+
+def save_versions(versions):
+    upgrade_path = []
+    for version in versions:
+        if version.startswith("v17.") and version.count(".") == 2:
+            upgrade_path.append({
+                "version": version.replace("v", ""),
+                "url": f"https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-{version.replace('v', '')}-ce.0.el8.x86_64.rpm/download.rpm"
+            })
+
+    with open("roles/gitlab_update/vars/gitlab_versions.yml", "w") as f:
+        yaml.dump({"gitlab_upgrade_path": upgrade_path}, f, default_flow_style=False, allow_unicode=True)
+
+if __name__ == "__main__":
+    versions = get_gitlab_versions()
+    if versions:
+        save_versions(versions)

@@ -1,0 +1,32 @@
+# Config Linux
+
+- name: creations repertoires
+  file: state=directory path="{{ item.p }}" owner="{{ user_oracle }}" group="{{ group_oracle }}" mode=755
+  with_items:
+   - { p: "{{ folder_domains }}" }
+   - { p: "{{ folder_install }}" }
+   - { p: "{{ folder_oracle }}" }
+   - { p: "{{ folder_scripts }}" }
+   - { p: "{{ folder_tmp }}" }
+   - { p: "{{ folder_datas }}" }
+   - { p: "{{ folder_logs }}" }
+   - { p: "{{ folder_sas_ansible }}" }
+   - { p: "{{ folder_patch }}" }
+
+- name: changements ulimits
+  blockinfile:
+    path: /etc/security/limits.conf  
+    backup: yes
+    insertbefore: "# End of file"  
+    content: |
+      * soft nofile 16384
+      * hard nofile 16384
+
+- name: insertion bash profile oracle
+  template:
+    backup: yes	
+    src: oracle_bash_profile.j2 
+    dest: "/home/{{ user_oracle }}/.bash_profile" 
+    owner: "{{ user_oracle }}" 
+    group: "{{ group_oracle }}"
+

@@ -1,0 +1,9 @@
+- name: Confirm suppression
+  pause:
+    prompt: "Confirmation de suppression de la vm {{ dnsname }} ? (O.oui/N.non)"
+    echo: yes
+  register: reponse
+
+- name: Persistance var ip
+  set_fact:
+    confirmation_del : "{{'true' if reponse.user_input | regex_search('Oui|O|o|Yes|Y|y') else 'false'}}"

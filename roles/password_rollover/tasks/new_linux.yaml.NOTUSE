@@ -1,0 +1,73 @@
+- name: Generate random password using lookup plugin
+  set_fact:
+      random_password_{{ var_host }}: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+
+- name: supprime clef conan
+  lineinfile:
+    path: "/home/ansible/.ssh/authorized_keys"
+    regexp: '^(.*){{ startkeyconan | replace("+", "\+") }}(.*)$'
+    state: absent
+    backup: yes  
+  tags: 
+      - deletekeys
+
+- name: add clef ansible sd-ansible
+  ansible.posix.authorized_key:
+    user: ansible
+    state: present
+    key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"
+
+# - name: Mise a jour user with random password RHE
+#   shell: 
+#       cmd: "echo -e 'ansible\n{{ random_password }}\n{{ random_password }}' | passwd"
+#   ignore_errors: yes
+#   register: majpasswd
+#   when:
+#       - "inventory_hostname in lookup('inventory_hostnames', 'RHE6:RHE7:RHE8')"
+
+- name: Mise a jour user with random password DEB
+  user:
+      name: "{{ user_target }}"
+      state: present
+#      password: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+      password: random_password_{{ var_host }}
+  ignore_errors: yes
+  register: majpasswd
+  when:
+      - "inventory_hostname in lookup('inventory_hostnames', 'DEB10:DEB11:DEB12')"
+
+- name: Maj OK ou pas
+  set_fact:
+    control_majpasswd: "{{ majpasswd.changed }}"
+
+- name: test existence Fichier pass 
+  stat:
+      path: "{{ fichier_pass }}"
+  delegate_to: localhost  
+  register: fichier
+
+# - name: Save password dans fichier txt s il n existe pas
+#   ansible.builtin.copy:
+#     content: "{{ inventory_hostname }};{{ user_target }};{{ random_password }}"
+#     dest: "{{ fichier_pass }}"
+#     mode: '0600'
+#   delegate_to: localhost
+#   when:
+#     - not fichier.stat.exists and control_majpasswd == "0"
+
+- name: Ajout password dans fin fichier txt s il existe
+  lineinfile:
+      dest: "{{ fichier_pass }}"
+      line: "{{ inventory_hostname }};{{ user_target }};random_password_{{ var_host }}"
+  delegate_to: localhost
+  when:
+    - fichier.stat.exists
+
+#- name: Create user with random password
+#  command:
+#     name: ansible
+#      password: "{{ random_password | password_hash('sha512') }}"
+#  when:
+#    - '"RHEL6" not in os'
+
+

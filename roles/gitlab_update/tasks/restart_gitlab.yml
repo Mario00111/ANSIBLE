@@ -1,0 +1,12 @@
+---
+- name: Redémarrer GitLab
+  command: gitlab-ctl restart
+
+- name: Vérifier la version finale de GitLab
+  command: gitlab-rake gitlab:env:info | grep "GitLab version"
+  register: gitlab_version_final
+  changed_when: false
+
+- name: Afficher la version finale de GitLab
+  debug:
+    msg: "Version finale de GitLab: {{ gitlab_version_final.stdout }}"

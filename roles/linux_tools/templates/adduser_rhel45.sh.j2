@@ -1,0 +1,117 @@
+#!/bin/sh
+#################################################
+#### Script de connexion SSH Adduser et +   ####
+#################################################
+set -x
+
+# Mode normal
+ResetColor="$(tput sgr0)"
+# Surlign(bold)
+boldon="$(tput smso)"
+boldoff="$(tput rmso)"
+
+# Variable entree
+vm_hostname=$1
+
+# Init passwd fixe pour admtma random sinon
+if [[ "$2" == "admtma" ]]; then
+Random_Password={{ random_passwd_tma }}
+else
+Random_Password=$2
+fi 
+
+echo "****************************************************************"
+echo "<!!             Script Connexion vm et Add user              !!>"
+echo "<!!              Logging => ssh_OK.log/ssh_KO.log            !!>"
+echo "<!!              Vm KO => hosts_ERROR.log                    !!>"
+echo "****************************************************************"
+if [ -z "$vm_hostname" ]
+then
+        echo "****************************************************************"
+        echo "<!!                      ERREUR                              !!>"
+        echo "Lancer script avec variable obligatoire hostname / user / password :"
+        echo -e "\033[31m ${boldon} [hostname]/[user]/[password]${boldoff} \033[0m"
+        echo "<!!                                                          !!>"
+        echo "****************************************************************"
+exit
+else
+###### Phase 1 : Connexion vm pour test                   ######
+echo ""
+echo " ###### 1. $vm_hostname : Test Connexion vm pour eventuel enregistrement know_host ###### "
+echo ""
+SSH_Return="$(ssh -i /home/ansible/.ssh/id_rsa ansible@$vm_hostname "exit;" 2>&1)"
+# Charge return code du ssh
+retCode=$?
+
+if [ $retCode -eq 0 ]; then
+cat <<EOF >> {{ folder_log }}/ssh_OK.log
+****************************
+Time connect : $(date)
+VM connect OK : $vm_hostname
+****************************
+EOF
+###### Si Connexion OK > action sur vm cible    ######
+echo ""
+echo " ###### 2. $vm_hostname : Si Connexion OK action  ###### "
+echo ""
+# Test user adm existe
+#SSH_Return_adm='$(ssh -i /home/ansible/.ssh/id_rsa ansible@$vm_hostname "/bin/egrep  -i "^{{ user_target }}:" /etc/passwd;exit;" 2>&1)'
+ssh -i /home/ansible/.ssh/id_rsa ansible@$vm_hostname "/bin/egrep  -i "^{{ user_target }}:" /etc/passwd;exit;"
+user_state=$?
+echo "$user_state"
+# Charge return code du ssh
+#retCodeAdm=${SSH_Return_adm}
+
+ssh -i /home/ansible/.ssh/id_rsa ansible@$vm_hostname "/bin/bash -s '$Random_Password'" <<'EOF'
+set -x
+rpwd="$1"
+/bin/egrep  -i "^{{ group_name_1 }}:" /etc/group
+    if [ $? -eq 1 ]; then
+        echo "Creation group : {{ group_name_1 }}"
+        sudo /usr/sbin/groupadd -g {{ group_number_1 }} {{ group_name_1 }}
+    else
+        echo "Creation group : DEJA EXISTANT ou ECHEC"
+    fi
+
+/bin/egrep  -i "^{{ user_target }}:" /etc/passwd
+if [ $? -eq 1 ]; then
+echo "Creation user : {{ user_target }}"
+sudo /usr/sbin/adduser -g {{ group_number_1 }} -d /home/{{ user_target }} {{ user_target }}
+echo "Change passwd user : {{ user_target }}"
+echo -e "${rpwd}\n${rpwd}"| sudo passwd {{ user_target }}
+    else
+        echo "Creation user : DEJA EXISTANT ou ECHEC"
+    fi
+EOF
+if [ $user_state -eq 1 ]; then
+    if [ ! -d "{{ folder_log }}/{{ environnement_short }}/{{ df }}" ]; then
+    # Create the directory if it doesn't exist
+        sudo -u "ansible" mkdir -p {{ folder_log }}/{{ environnement_short }}/{{ df }}
+        echo "Creation dossier :  {{ folder_log }}/{{ environnement_short }}/{{ df }}"
+    else
+       echo "Dossier deja existant :  {{ folder_log }}/{{ environnement_short }}/{{ df }}"
+    fi
+    echo "log in {{ folder_log }}/Adduser_{{ user_target }}_List.csv"
+    if [ ! -f "{{ folder_log }}/{{ environnement_short }}/{{ df }}/Adduser_{{ user_target }}_List.csv" ]; then
+    # Create the file if it doesn't exist
+        sudo -u "ansible" touch {{ folder_log }}/{{ environnement_short }}/{{ df }}/Adduser_{{ user_target }}_List.csv
+        echo "Creation fichier ok :  {{ folder_log }}/{{ environnement_short }}/{{ df }}/Adduser_{{ user_target }}_List.csv"
+    else
+       echo "Fichier deja existant : {{ folder_log }}/{{ environnement_short }}/{{ df }}/Adduser_{{ user_target }}_List.csv"
+    fi  
+    printf "${vm_hostname};{{ user_target }};$Random_Password\n" >> {{ folder_log }}/{{ environnement_short }}/{{ df }}/Adduser_{{ user_target }}_List.csv
+else
+    echo "Rien a ecrire"
+fi
+######              2. : Fin                        ######
+else
+cat <<EOF >> {{ folder_log }}ssh_KO.log
+****************************
+Time connect : $(date)
+SSH copy-id KO : $vm
+Erreur code : $SSH_Return_CopyId
+****************************
+EOF
+######               1. : Fin                        ######
+fi
+fi

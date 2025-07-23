@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+##################################################################
+##   SCRIPT RECUP IP LIBRE + AJOUT IP+DNSNAME                   ##
+##################################################################
+## PARAMETRE ENTREE
+## DnsName 
+## SubNet 
+#!/usr/bin/env python3
+
+import requests,json
+
+certificate = "{{ ipam_certificat }}"
+headers = {
+'x-ipm-username': "{{ ipam_headers_username }}",
+'x-ipm-password': "{{ ipam_headers_password }}",
+'cache-control': "no-cache"
+}
+
+##################################################################
+# Requete 1 : recherche IP Libre dans subnet
+url = "{{ url_find_free_ip }}"
+queryfreeip = {"subnet_id":"{{ ipam_subnet }}","max_find":"1"}
+
+resp_free_ip = requests.request("OPTIONS", url, headers=headers, params=queryfreeip, verify=certificate)
+#print(resp_free_ip.text)
+
+# Convertion Object python response en JSON
+json_resp_free_ip = json.dumps(resp_free_ip.json(), indent=2)
+
+print(json_resp_free_ip)
+
+# Convertion JSON en Object python (string)
+string_resp_free_ip = json.loads(json_resp_free_ip)[0]
+# Extract possible 
+# [{"errno":"0","ip_addr":"c0a87b01","hostaddr":"192.168.123.1","subnet_name":"NET-APPS-INT","site_id":"2","site_name":"CPR","pool_name":"","subnet_id":"284","pool_id":"0"}]
+# string_resp_free_ip["errno"]
+# string_resp_free_ip["ip_addr"] => IP en hexadecimal 
+# string_resp_free_ip["hostaddr"] => IP
+# string_resp_free_ip["subnet_name"] => Nom du reseau parent
+# string_resp_free_ip["site_id"]
+# string_resp_free_ip["site_name"]
+# string_resp_free_ip["pool_name"]
+# string_resp_free_ip["subnet_id"]
+# string_resp_free_ip["pool_id"]
+
+host_ip = string_resp_free_ip["hostaddr"]
+nb_site_id = string_resp_free_ip["site_id"]
+##################################################################
+# Requete 2 : Add IP
+url = "{{ url_add_ip }}"
+
+queryaddip = {"hostaddr":host_ip,"name":"{{ dnsname }}{{ dns_suffix }}","site_id":nb_site_id}
+
+resp_ip_add = requests.request("OPTIONS", url, headers=headers, params=queryaddip, verify=certificate)
+json_resp_ip_add = json.dumps(resp_ip_add.json(), indent=2)
+
+print(json_resp_ip_add)
+
+#  ip_free = output["hostaddr"]
+#print(output)

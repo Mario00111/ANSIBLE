@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+##################################################################
+##   SCRIPT DELETE DNSNAME                                     ##
+##################################################################
+## PARAMETRE ENTREE
+## DnsName 
+import requests,json,logging,sys
+
+
+certificate = "{{ ipam_certificat }}"
+headers = {
+'x-ipm-username': "{{ ipam_headers_username }}",
+'x-ipm-password': "{{ ipam_headers_password }}",
+'cache-control': "no-cache"
+}
+
+##################################################################
+# Requete 1 : Recup IP + site_id
+# url api 
+url = "{{ url_address_list }}?WHERE=subnet_id={{ ipam_subnet }}"
+
+# Parametre 
+queryaddresslistip = {"site_name" : "CPR"}
+
+# Exec requete
+list_info = requests.request("GET", url, headers=headers, params=queryaddresslistip, verify=certificate)
+# Formatage json de la reponse
+list_info_dump = json.dumps(list_info.json(), indent=2)
+list_info_load_dump = json.loads(list_info_dump)
+
+dnsname_found = False
+
+for item in list_info_load_dump:
+    if item["name"] == '{{ dnsname }}{{dns_suffix}}':
+        logging.info("IP exist")
+        ip_adress = item["hostaddr"]
+        dnsname = item["name"]
+        siteid  = item["site_id"]
+        dnsname_found = True 
+        break
+
+if not dnsname_found:
+    logging.error("Aucune correspondance trouvée pour le dnsname.")
+    print(json.dumps({"error": "Aucune correspondance trouvée pour le dnsname."}, indent=2))
+    exit(1)
+
+##################################################################
+# Requete 2 : Delete IP/DNS
+url = "{{ url_delete_ip }}"
+querydelip = {"hostaddr":ip_adress,"name":dnsname,"site_id":siteid}
+
+resp_delete_ip = requests.request("OPTIONS", url, headers=headers, params=querydelip, verify=certificate)
+json_resp_delete_ip = json.dumps(resp_delete_ip.json(), indent=2)
+
+print(json_resp_delete_ip)
+

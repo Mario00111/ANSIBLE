@@ -1,0 +1,17 @@
+- name: Include task create user Old linux
+  include_role:
+    name: linux_tools
+    tasks_from: create_user_old_linux.yaml
+  when:
+    - inventory_hostname in groups['RHE5']
+  tags: 
+      - old_linux
+
+- name: Include task All Linux
+  include_role:
+    name: linux_tools
+    tasks_from: all_linux.yaml
+  when:
+    - inventory_hostname not in groups['RHE5']
+  tags: 
+      - all_linux

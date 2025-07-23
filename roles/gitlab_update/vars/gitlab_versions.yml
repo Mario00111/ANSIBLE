@@ -1,0 +1,21 @@
+gitlab_upgrade_path:
+- url: https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-17.0.0-ee-ce.0.el8.x86_64.rpm/download.rpm
+  version: 17.0.0-ee
+- url: https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-17.1.0-ee-ce.0.el8.x86_64.rpm/download.rpm
+  version: 17.1.0-ee
+- url: https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-17.2.0-ee-ce.0.el8.x86_64.rpm/download.rpm
+  version: 17.2.0-ee
+- url: https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-17.3.0-ee-ce.0.el8.x86_64.rpm/download.rpm
+  version: 17.3.0-ee
+- url: https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-17.4.0-ee-ce.0.el8.x86_64.rpm/download.rpm
+  version: 17.4.0-ee
+- url: https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-17.5.0-ee-ce.0.el8.x86_64.rpm/download.rpm
+  version: 17.5.0-ee
+- url: https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-17.6.0-ee-ce.0.el8.x86_64.rpm/download.rpm
+  version: 17.6.0-ee
+- url: https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-17.7.0-ee-ce.0.el8.x86_64.rpm/download.rpm
+  version: 17.7.0-ee
+- url: https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-17.8.0-ee-ce.0.el8.x86_64.rpm/download.rpm
+  version: 17.8.0-ee
+- url: https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-17.9.0-ee-ce.0.el8.x86_64.rpm/download.rpm
+  version: 17.9.0-ee

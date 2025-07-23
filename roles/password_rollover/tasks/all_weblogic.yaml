@@ -1,0 +1,25 @@
+# - name: Copie script python on localhost
+#   template:
+#     src: password_oracle_change.sh.j2
+#     dest: "{{ folder_script_oracle }}/password_change.sh"
+#     mode: 0775
+
+# - name: Script shell change mdp
+#   script: "{{ folder_script }}/password_change.sh {{ inventory_hostname }} {{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+#   register: majpasswd
+#   ignore_errors: true
+#   delegate_to: localhost
+
+- name: Mise a jour user Oracle with random password Weblogic
+  user:
+      name: "{{ user_target }}"
+      state: present
+      password: "{{ lookup('password', '/datas/Livrables/Test/{{ var_host }}.csv length=12 chars=ascii_letters,digits') | password_hash('sha512') }}"
+  ignore_errors: yes
+  register: majpasswd
+  when:
+      - "inventory_hostname in lookup('inventory_hostnames', 'RHE6:RHE7:RHE8')"
+
+- name: Maj user Oracle OK ou pas
+  set_fact:
+    control_majpasswd: "{{ majpasswd.changed }}"

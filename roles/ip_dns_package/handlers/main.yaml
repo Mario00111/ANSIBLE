@@ -1,0 +1,10 @@
+---
+
+- name: Ajouter le DF avec le type_SA dans [APPS:children]
+  ansible.builtin.lineinfile:
+    path: "inventories/{{ env_long }}/hosts.ini"
+    line: "{{ dns_parts[1] | upper }}_{{ dns_parts[2][:4] | upper }}"
+    state: present
+    insertafter: "^\\[{{ dns_parts[1] | upper }}:children\\]"
+
+

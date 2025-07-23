@@ -1,0 +1,33 @@
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# User specific environment and startup programs
+
+PATH=$PATH:$HOME/.local/bin:$HOME/bin
+
+export PATH
+
+export LANG="en_US.UTF-8"
+export JAVA_HOME=/SOFT/oracle/java_current
+export DOMAIN_HOME="/u01/domains/"$HOSTNAME"_domain"
+export PATH=$JAVA_HOME/bin:$PATH
+
+
+alias kraow='/u01/scripts/kraow.sh'
+alias startMS='/u01/scripts/start.sh MS'
+alias stopMS='/u01/scripts/stop.sh MS'
+
+alias MSLogs='cd $DOMAIN_HOME/servers/ManagedServer_1/logs'
+alias ADLogs='cd $DOMAIN_HOME/servers/AdminServer/logs'
+
+alias startNM='/u01/scripts/start.sh NM'
+alias startAD='/u01/scripts/start.sh AD'
+
+alias deploy='/u01/scripts/deploy.sh'
+
+alias pswls='ps -ef|grep weblo'
+	

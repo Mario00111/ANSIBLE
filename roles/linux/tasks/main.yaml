@@ -1,0 +1,83 @@
+# Config Linux
+
+- name: creation group oinstall
+  group: 
+    name={{ group_oracle }}
+    gid=500
+    state=present
+
+- name: creation user oracle
+  user:
+    name={{ user_oracle }}
+    uid=501
+    groups={{ group_oracle }}
+    home=/home/{{ user_oracle }}
+    password={{ user_oracle | password_hash('sha512') }}
+    state=present
+
+- name: creations repertoires
+  file: state=directory path="{{ item.p }}" owner="{{ user_oracle }}" group="{{ group_oracle }}" mode=755
+  with_items:
+   - { p: "{{ folder_domains }}" }
+   - { p: "{{ folder_config }}/{{ name_DF }}" }
+   - { p: "{{ folder_install }}" }
+   - { p: "{{ folder_oracle }}" }
+   - { p: "{{ folder_scripts }}" }
+   - { p: "{{ folder_tmp }}" }
+   - { p: "{{ folder_datas }}" }
+   - { p: "{{ folder_logs }}" }
+   - { p: "{{ folder_sas_ansible }}" }
+   - { p: "{{ folder_patch }}" }
+   - { p: "{{ folder_sas_archive }}" }
+   - { p: "{{ folder_sas_Application }}" }
+   - { p: "{{ folder_sas_Lib }}" }
+   - { p: "{{ folder_sas_Properties }}" }
+   - { p: "{{ folder_sas_RessourceAdapter }}" }
+   - { p: "{{ folder_sas_ShareLib }}" }
+   
+- name: recursively update /u01 directory owner
+  file:
+    path: /u01
+    state: directory
+    recurse: yes
+    owner: "{{ user_oracle }}" 
+    group: "{{ group_oracle }}"
+
+- name: changements ulimits
+  blockinfile:
+    path: /etc/security/limits.conf  
+    backup: yes
+    insertbefore: "# End of file"  
+    content: |
+      * soft nofile 16384
+      * hard nofile 16384
+
+- name: modification fichier hostname
+  hostname:
+    name: "{{ inventory_hostname.split('.')[0] }}"
+
+- name: insertion bash profile oracle
+  template:
+    backup: yes	
+    src: oracle_bash_profile.j2 
+    dest: "/home/{{ user_oracle }}/.bash_profile" 
+    owner: "{{ user_oracle }}" 
+    group: "{{ group_oracle }}"
+
+- name: Copie shell satellite
+  copy:
+   src: satelHit.sh
+   dest: "/tmp/"
+   mode: 0755
+   
+- name: Copie shell yum lib
+  copy:
+   src: yumList.sh
+   dest: "/tmp/"
+   mode: 0755
+   
+- name: lancement parametrage Satellite
+  shell: 'su -l root -c "/tmp/satelHit.sh"'
+
+- name: lancement install lib
+  shell: 'su -l root -c "/tmp/yumList.sh"'

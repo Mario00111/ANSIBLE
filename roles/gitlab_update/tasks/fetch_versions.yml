@@ -1,0 +1,21 @@
+---
+
+  
+- name: Copier le script Python sur le serveur distant
+  template:
+    src: fetch_gitlab_versions.py.j2
+    dest: "/tmp/gitlab_update/fetch_gitlab_versions.py.j2"
+  delegate_to: localhost
+  run_once: true
+
+- name: Exécuter le script pour récupérer les versions de GitLab
+  script: "/tmp/gitlab_update/fetch_gitlab_versions.py.j2"
+  args:
+    executable: python3
+  register: gitlab_versions
+  delegate_to: localhost
+
+- name: Charger les versions mises à jour
+  include_vars: roles/gitlab_update/vars/gitlab_versions.yml
+
+

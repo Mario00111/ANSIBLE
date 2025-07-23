@@ -1,0 +1,64 @@
+- name: Copie script python on localhost
+  template:
+    src: ipam_add_ip.py.j2
+    dest: "{{ ipam_folder_scripts }}/temp/ipam_add_ip.py"
+  delegate_to: localhost
+  run_once: true
+
+- name: Script provision IP libre + add IP-DNS
+  script: '{{ ipam_folder_scripts }}/temp/ipam_add_ip.py {{ dnsname }}'
+  args:
+    executable: python3
+  register: add_ipdns
+  delegate_to: localhost
+
+- name: Extraire le sous-réseau depuis la sortie du script Python
+  set_fact:
+    subnet: "{{ (add_ipdns.stdout_lines[5] | regex_replace('\"|,', ':')).split(':')[4] }}"
+  when: add_ipdns.rc == 0
+
+
+- name: Persistance var ip
+  set_fact:
+    ip: "{{ (add_ipdns.stdout_lines[4] | regex_replace('\"|,', ':')).split(':')[4] }}"
+
+- name: Confirmation
+  debug: 
+    msg: "{%- if add_ipdns.rc == 0 -%}Confirmation création IP et DNS : {{ dnsname }}{%- else -%}False{%- endif -%}"
+
+
+- name: Vérifier que dnsname est défini + découpage 
+  set_fact:
+    dns_parts: "{{ dnsname.split('-') }}"
+  when: dnsname is defined and (dnsname | regex_search('-'))
+
+
+- name: Ajouter l'IP dans hosts.ini
+  ansible.builtin.blockinfile:
+    path: "inventories/{{ env_long }}/hosts.ini"
+    block: |
+      [{{ dns_parts[1] | upper }}_{{ dns_parts[2][:4] | upper }}]
+      {{ dnsname }} ansible_host={{ ip }} ansible_python_interpreter=/usr/bin/python3
+    create: yes
+    insertbefore: "^\\[{{ dns_parts[1] | upper }}:children\\]"
+    marker: "#*"
+  notify: 
+  - Ajouter le DF avec le type_SA dans [APPS:children]
+
+
+- name: Ajouter le sous-réseau dans {{DF}}.yaml
+  ansible.builtin.lineinfile:
+    path: "inventories/{{ env_long }}/group_vars/{{ vars_upper }}"
+    line: "subnet: {{ subnet }}"
+    insertafter: "^# VLAN"
+    create: yes 
+
+
+- name: Vérifier les variables extraites
+  debug:
+    msg:
+      - "IP extraite : {{ ip }}"
+      - "Sous-réseau extrait : {{ subnet }}"
+
+- name: Rafraîchir l'inventaire
+  meta: refresh_inventory

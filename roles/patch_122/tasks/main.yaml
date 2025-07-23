@@ -1,0 +1,28 @@
+- name: Copie Opatch weblo
+  copy:
+   src: "p28186730_139428_Generic.zip"
+   dest: "{{ folder_patch }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+
+- name: Decompression Opatch
+  unarchive:
+    src: "{{ folder_patch }}/p28186730_139428_Generic.zip"
+    dest: "{{ folder_patch }}"
+    copy: no
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence Opatch
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch version" | grep "13.9.4.2.8"'
+  register: grep_result
+  ignore_errors: yes
+
+- debug: msg="Test result grep =  {{ grep_result.rc }}"
+  ignore_errors: yes
+
+- name: Installation Opatch  
+  command: "{{ folder_oracle }}/{{ version_jdk_short }}/bin/java -jar {{ folder_patch }}/6880880/opatch_generic.jar -silent oracle_home={{ folder_middleware_home }}"
+  become: yes
+  become_user: '{{ user_oracle }}'
+  when: grep_result.rc != 0

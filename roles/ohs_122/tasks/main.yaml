@@ -1,0 +1,32 @@
+# Installation ohs 12.2
+
+- name: copie fichier response files weblogic sur vms cible
+  template:
+    src: ohs_122.j2
+    dest: "{{ folder_install }}/ohs_122.rsp"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence installateur ohs 
+  stat:
+    path: "{{ folder_install }}/{{ version_ohs }}"
+  register: installOHS_found
+
+- name: Copie installeur ohs
+  copy:
+   src: "{{ version_ohs }}"
+   dest: "{{ folder_install }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+   mode: 0755
+  when: not installOHS_found.stat.exists
+
+- name: Test existence installation ohs
+  stat:
+    path: "{{ folder_middleware_home }}/{{ version_ohs }}"
+  register: OHS_found
+
+- name: Installation ohs 
+  shell: 'su -l oracle -c "{{ folder_install }}/{{ version_ohs }} -J-Djava.io.tmpdir={{ folder_tmp }} -silent -novalidation -responseFile {{ folder_install }}/ohs_122.rsp -invPtrLoc /etc/oraInst.loc"'
+  register: result
+  failed_when: (result.rc!=0) and (not OHS_found.stat.exists)

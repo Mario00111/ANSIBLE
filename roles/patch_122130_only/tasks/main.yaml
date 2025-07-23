@@ -1,0 +1,97 @@
+- name: Copie Opatch weblo
+  copy:
+   src: "p28186730_139400_Generic.zip"
+   dest: "{{ folder_patch }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+
+- name: Decompression Opatch
+  unarchive:
+    src: "{{ folder_patch }}/p28186730_139400_Generic.zip"
+    dest: "{{ folder_patch }}"
+    copy: no
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence Opatch
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch version" | grep "13.9.4.0.0"'
+  register: grep_result
+  ignore_errors: yes
+
+- debug: msg="Test result grep =  {{ grep_result.rc }}"
+  ignore_errors: yes
+
+- name: Installation Opatch  
+  command: "{{ folder_oracle }}/{{ version_jdk_short }}/bin/java -jar {{ folder_patch }}/6880880/opatch_generic.jar -silent oracle_home={{ folder_middleware_home }}"
+  become: yes
+  become_user: '{{ user_oracle }}'
+  when: grep_result.rc != 0
+
+- name: Test existence patch WL1
+  stat:
+    path: "{{ folder_patch }}/p28710939_122130_Generic.zip"
+  register: installpatch_found
+
+- name: Copie patch weblo WL1
+  copy:
+   src: "p28710939_122130_Generic.zip"
+   dest: "{{ folder_patch }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+  when: not installpatch_found.stat.exists
+
+- name: Decompression patch WL1
+  unarchive:
+    src: "{{ folder_patch }}/p28710939_122130_Generic.zip"
+    dest: "{{ folder_patch }}"
+    copy: no
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence patch WL1
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch lsinventory" | grep 28710939'
+  register: grep_result
+  ignore_errors: yes
+
+- debug: msg="Test result grep =  {{ grep_result.rc }}"
+  ignore_errors: yes
+
+- name: Application du patch WL1
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch apply -force -silent {{ folder_patch }}/28710939"'
+  when: grep_result.rc != 0
+  ignore_errors: yes
+
+- name: Test existence patch WL2
+  stat:
+    path: "{{ folder_patch }}/p28927298_122130_Generic.zip"
+  register: installpatch_found
+
+- name: Copie patch weblo
+  copy:
+   src: "p28927298_122130_Generic.zip"
+   dest: "{{ folder_patch }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+  when: not installpatch_found.stat.exists
+
+- name: Decompression patch WL2
+  unarchive:
+    src: "{{ folder_patch }}/p28927298_122130_Generic.zip"
+    dest: "{{ folder_patch }}"
+    copy: no
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence patch WL2
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch lsinventory" | grep 28927298'
+  register: grep_result
+  ignore_errors: yes
+
+- debug: msg="Test result grep =  {{ grep_result.rc }}"
+  ignore_errors: yes
+
+- name: Application du patch WL2
+  shell: 'su -l oracle -c "{{ folder_middleware_home }}/OPatch/opatch apply -force -silent {{ folder_patch }}/28927298"'
+  when: grep_result.rc != 0
+  ignore_errors: yes
+

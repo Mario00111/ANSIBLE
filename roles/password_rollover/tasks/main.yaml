@@ -1,0 +1,35 @@
+#- name: Include task RHEL5 
+#  include_role:
+#   name: password_rollover
+#    tasks_from: RHE5.yaml
+#  when:
+#    - '"RHE5" in df or "JS" in df'
+#  tags: 
+#      - RHE5
+
+- name: Include task All linux
+  include_role:
+    name: password_rollover
+    tasks_from: all_linux.yaml
+  when:
+    - '"ansible" in user'
+  tags: 
+      - all_linux
+
+- name: Include task All Weblogic
+  include_role:
+    name: password_rollover
+    tasks_from: all_weblogic.yaml
+  when:
+    - '"oracle" in user'
+  tags: 
+      - all_weblo
+
+# - name: Include task DEB linux
+#   include_role:
+#     name: password_rollover
+#     tasks_from: new_linux.yaml
+#   when:
+#     - '"DK" in df'
+#   tags: 
+#       - new_linux

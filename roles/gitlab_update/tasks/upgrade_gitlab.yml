@@ -1,0 +1,37 @@
+---
+- name: Creer le dossier de mise a jour
+  file:
+    path: "{{ gitlab_repo_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Desactiver les sauvegardes automatiques
+  file:
+    path: "{{ item }}"
+    state: touch
+  loop:
+    - /etc/gitlab/skip-unmigrated-data-check
+    - /etc/gitlab/skip-auto-backup
+
+- name: Arrêter GitLab avant mise a jour
+  command: gitlab-ctl stop
+  ignore_errors: true
+
+- name: Telecharger et installer les mises a jour
+  block:
+    - name: Telecharger GitLab {{ item.version }}
+      get_url:
+        url: "{{ item.url }}"
+        dest: "{{ gitlab_repo_path }}/gitlab-ce-{{ item.version }}.rpm"
+        mode: '0644'
+      loop: "{{ gitlab_upgrade_path }}"
+
+    - name: Installer GitLab {{ item.version }}
+      yum:
+        name: "{{ gitlab_repo_path }}/gitlab-ce-{{ item.version }}.rpm"
+        state: present
+      loop: "{{ gitlab_upgrade_path }}"
+
+    - name: Reconfigurer GitLab apres installation de {{ item.version }}
+      command: gitlab-ctl reconfigure
+      loop: "{{ gitlab_upgrade_path }}"

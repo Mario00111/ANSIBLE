@@ -1,0 +1,80 @@
+- name: Check SSH known_hosts for {{ inventory_hostname }}
+  local_action: shell ssh-keygen -l -F {{ inventory_hostname }}
+  register: checkForKnownHostsEntry
+  failed_when: false
+  changed_when: false
+  ignore_errors: true
+
+- name: Add {{ inventory_hostname }} to SSH known hosts automatically
+  when: checkForKnownHostsEntry.rc == 1
+  changed_when: checkForKnownHostsEntry.rc == 1
+  local_action: 
+    module: shell
+    args: ssh-keyscan -H "{{ inventory_hostname }}" >> $HOME/.ssh/known_hosts
+
+- name: Generate a random password
+  set_fact:
+    random_passwd: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+  delegate_to: localhost
+  register: password_result
+
+- name: Mise a jour user with random password tout sauf RHE5
+  user:
+      name: "{{ user_target }}"
+      state: present
+      password: "{{ random_passwd | password_hash('sha512') }}"
+  ignore_errors: true
+  register: majpasswdall
+  when:
+      - "inventory_hostname in lookup('inventory_hostnames', 'RHE6:RHE7:RHE8:DEB11:DEB12')"
+
+- name: Copie script python on localhost pour RHE5
+  template:
+    src: password_change.sh.j2
+    dest: "{{ folder_script }}/password_change.sh"
+    mode: 0775
+  delegate_to: localhost
+  run_once: true
+  when:
+      - "inventory_hostname in lookup('inventory_hostnames', 'RHE5')"
+
+- name: Script shell change mdp pour RHE5
+  script: "{{ folder_script }}/password_change.sh {{ inventory_hostname }} {{ random_passwd }} {{ in_keyconan }} {{ in_keylansw }}"
+  register: majpasswdrhe5
+  ignore_errors: true
+  delegate_to: localhost
+  when:
+      - "inventory_hostname in lookup('inventory_hostnames', 'RHE5')"
+
+- name: Create a directory if it does not exist
+  file:
+    path: "{{ folder_log }}/{{ environnement_short }}/{{ df }}"
+    state: directory
+    owner: ansible
+    group: ansible
+    mode: '0755'
+  delegate_to: localhost
+
+- name: Touch fichier si absent
+  file:
+    path: "{{ folder_log }}/{{ environnement_short }}/{{ df }}/Adduser_{{ user_target }}_List.csv"
+    owner: ansible
+    group: ansible
+    mode: '0755'
+    state: touch
+  delegate_to: localhost
+
+- name: Ecriture dans fichier
+  lineinfile:
+      path: "{{ folder_log }}/{{ environnement_short }}/{{ df }}/Adduser_{{ user_target }}_List.csv"
+      line: "{{ inventory_hostname }};{{ user_target }};{{ random_passwd }}"
+      insertafter: EOF
+  delegate_to: localhost
+  when:
+      - majpasswdall.changed == true or majpasswdrhe5.rc == 0
+
+- name: Print password test result
+  debug:
+    msg: "Password change for user {{ user_target }} was successful."
+  when:
+      - majpasswdall.changed == true or majpasswdrhe5.rc == 0

@@ -1,0 +1,32 @@
+# Installation osb 12.2.1.3.0
+
+- name: copie fichier response files weblogic sur vms cible
+  template:
+    src: osb_122130.j2
+    dest: "{{ folder_install }}/osb_122130.rsp"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Test existence installateur osb 
+  stat:
+    path: "{{ folder_install }}/{{ version_osb }}"
+  register: installWL_found
+
+- name: Copie installeur osb
+  copy:
+   src: "{{ version_osb }}"
+   dest: "{{ folder_install }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+  when: not installWL_found.stat.exists
+
+- name: Test existence installation osb
+  stat:
+    path: "{{ folder_middleware_home }}"
+  register: WL_found
+
+- name: Installation osb  
+  command: "{{ folder_oracle }}/{{ version_jdk_short }}/bin/java -Xms1024m -Xmx1024m -Djava.io.tmpdir={{ folder_tmp }} -jar {{ folder_install }}/{{ version_osb }} -silent -novalidation -responseFile {{ folder_install }}/osb_122130.rsp -invPtrLoc /etc/oraInst.loc"
+  become: yes
+  become_user: '{{ user_oracle }}'
+  when: WL_found.stat.exists

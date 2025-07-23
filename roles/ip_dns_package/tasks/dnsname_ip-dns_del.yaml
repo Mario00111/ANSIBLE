@@ -1,0 +1,41 @@
+
+
+- name: Copie script python on localhost
+  template:
+    src: ipam_delete_ip.py.j2
+    dest: "{{ ipam_folder_scripts }}/ipam_delete_ip.py"
+  register: del_ipdns
+  delegate_to: localhost
+  run_once: true
+
+
+- name: Exec Script check ip+dns
+  script: '{{ ipam_folder_scripts }}/ipam_delete_ip.py {{ dnsname }}'
+  args:
+    executable: python3
+  register: del_ipdns
+  delegate_to: localhost
+
+- name: Vérifier que dnsname est défini et correspond au format attendu
+  set_fact:
+    dns_parts: "{{ dnsname.split('-') }}"
+  when: dnsname is defined and (dnsname | regex_search('-'))
+
+- name: Supprimer toutes les lignes liées au bloc dans hosts.ini
+  ansible.builtin.lineinfile:
+    path: "inventories/{{ env_long }}/hosts.ini"
+    regexp: "^(\\#\\*|\\[{{ dns_parts[1] | upper }}_{{ dns_parts[2][:4] | upper }}\\]|{{ dnsname }})"
+    state: absent
+
+
+- name: Supprimer le DF du groupe [APPS:children]
+  ansible.builtin.lineinfile:
+    path: "inventories/{{ env_long }}/hosts.ini"
+    regexp: "^{{ dns_parts[1] | upper }}_{{ dns_parts[2][:4] | upper }}"
+    state: absent
+
+
+- name: Confirmation
+  debug:
+    msg: "{%- if del_ipdns.rc == 0 -%}Confirmation suppression IP et DNS : {{ dnsname }}{%- else -%}False{%- endif -%}"
+

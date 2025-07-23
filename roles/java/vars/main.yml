@@ -1,0 +1,14 @@
+    
+    folder_local_java: "/datas/Livrables/ARCHIVE/Java"
+    java_install_dir: "/opt/java"
+
+    arch: "x64_linux"
+    type: "jdk"
+    impl: "hotspot"
+
+    latest_jdk8_dl: jdk-8u441-linux-x64.tar.gz
+    latest_jdk21_dl: jdk-21_linux-x64_bin.tar.gz
+    
+
+    jdk8_path: "{{ java_install_dir }}/jdk8"
+    jdk21_path: "{{ java_install_dir }}/jdk21"

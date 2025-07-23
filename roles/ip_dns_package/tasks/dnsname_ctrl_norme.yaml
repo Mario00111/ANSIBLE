@@ -1,0 +1,18 @@
+- name: Script controle dnsname normalisation
+  script: check_norme.sh {{ dnsname }}
+  register: control
+  ignore_errors: true
+  delegate_to: localhost
+
+#- name: extract ENV
+#  set_fact:
+#   envstdout: "{{ control.stdout_lines[5] | regex_replace('=|>', ':') }}"
+
+- name: Persistant Environnement
+  set_fact:
+    env: "{{ control.stdout_lines[5].split(':')[1] }}"
+
+
+- name: Persistant var controle nommage voir main
+  set_fact:
+    control_result: "{{ control.rc }}"

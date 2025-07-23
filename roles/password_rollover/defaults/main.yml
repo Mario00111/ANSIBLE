@@ -1,0 +1,13 @@
+fichier_pass: "/home/ansible/logs/passwd_rollover/mdp_list.txt"
+
+folder_log: "/home/ansible/logs/passwd_rollover"
+
+folder_script: "/home/ansible/scripts/tmp"
+
+in_keyconan: "yC1X17hGYehiHPd1kweNbdVWg1Ku8ss1YGRpKIEVz58EsLUIiIZO2igP"
+in_keylansw: "770wIBSFLOe5Qiet5jFwWKufxgBsBTagx7tntOOvOX0fctWyhNB9X7va"
+
+user_target: "{{ user }}"
+
+var_host : "{{ inventory_hostname.split('.')[0] | replace('-','') }}"
+

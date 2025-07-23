@@ -1,0 +1,24 @@
+- name: Include task controle nommage
+  include_tasks: 
+    file: "dnsname_ctrl_norme.yaml"
+  when: dnsname is defined
+  register: resultat
+
+- name: Resultat controle nommage "0=OK / 10=KO"
+  debug: 
+    var: "control_result"
+
+- name: Include task provision IP/DNS
+  include_tasks: 
+    file: "dnsname_ip-dns_add.yaml"
+  when: (control_result == "0") and (action == "add")
+
+- name: Include task Delete IP/DNS
+  include_tasks: 
+    file: "prompt.yaml"
+  when: (control_result == "0") and (action == "del")
+
+- name: Include task Delete IP/DNS
+  include_tasks: 
+    file: "dnsname_ip-dns_del.yaml"
+  when: (confirmation_del == true) and (action == "del")

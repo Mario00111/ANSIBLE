@@ -1,0 +1,55 @@
+---
+# defaults file for ip_dns_package-role
+df_var: "{{ dnsname.split('-')[1] }}"
+
+ipam_folder_scripts: "/home/ansible/efficientip_scripts"
+
+ipam_certificat: "/etc/pki/tls/certs/ca-bundle.crt"
+
+ipam_headers_username: "YW5zaWJsZQ=="
+ipam_headers_password: "Y3Njc3J2NzMkZXhB"
+
+url_find_free_ip: "https://sd-ipam.cpr.local/rpc/ip_find_free_address"
+url_address_list: "https://sd-ipam.cpr.local/rpc/ip_address_list"
+url_add_ip: "https://sd-ipam.cpr.local/rpc/ip_add"
+url_delete_ip: "https://sd-ipam.cpr.local/rpc/ip_delete"
+
+# conversion ENV => valeur SUBNET dans l'IPAM
+# VLAN NET-APPS-[ENV]
+# POC idem INT pas de VLAN POC
+ipam_apps_env_conversion:
+      poc: '284' 
+      dev: '285'
+      int: '284'
+      qua: '283'
+      pre: '282'
+      pro: '281'
+# conversion de la valeur ENV (setfact en sortie de dnsname_ctrl_norme.yaml) en numerique
+ipam_apps_subnet: '{{ipam_apps_env_conversion[env | default("Cette env n existe pas dans la liste")] | default("") }}'
+env_prefix: "{{ ipam_apps_env_conversion.keys()|list }}"
+
+# VLAN NET-APPS-MGMT-[ENV]
+ipam_mgmt_env_conversion:
+      qua: '287'
+      pro: '285'
+# conversion de la valeur ENV (setfact en sortie de dnsname_ctrl_norme.yaml) en numerique 
+ipam_mgmt_subnet: '{{ipam_mgmt_env_conversion[env | default("Cette env n existe pas dans la liste")] | default("") }}'
+
+# VLAN DMZ-APPS-[ENV]
+# POC idem INT pas de VLAN POC
+ipam_dmz_apps_env_conversion:
+      poc: '277'
+      dev: '278'
+      int: '277'
+      qua: '276'
+      pre: '275'
+      pro: '274'
+# conversion de la valeur ENV en numerique
+ipam_dmz_apps_subnet: '{{ipam_dmz_apps_env_conversion[env | default("Cette env n existe pas dans la liste")] | default("") }}'
+
+
+ipam_subnet: "{{ ipam_mgmt_subnet if df_var == 'mgmt' else ipam_dmz_apps_subnet if df_var is search ('dmz') else ipam_apps_subnet }}"
+
+dns_suffix: ".cpr.local"
+
+confirmation_del: "false"

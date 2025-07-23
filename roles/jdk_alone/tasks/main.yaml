@@ -1,0 +1,55 @@
+# Config deploy JDK 
+
+- name: Test existence fichier cacerts
+  stat:
+    path: "{{ file_cacerts }}"
+    follow: yes
+  register: cacerts_found
+
+- name: Copie fichier cacerts si exist
+  copy: 
+    src: "{{ file_cacerts }}"
+    dest: "{{ folder_sas_jdk }}/"
+    remote_src: yes
+  when: cacerts_found.stat.exists
+  register: cacerts_create
+
+- name: Test existence installation jdk
+  stat:
+    path: "{{ folder_sas_jdk }}/{{ version_jdk_short }}"
+  register: jdk_found
+
+- name: Decompression jdk
+  unarchive:
+    src: "{{ folder_local_jdk }}/{{ version_jdk_long }}"
+    dest: "{{ folder_sas_jdk }}"
+    remote_src: no
+    owner: "root"
+    group: "root"
+    list_files: yes
+  register: unarchived_list
+  when: not jdk_found.stat.exists
+
+- name: Suppression lien symbolique
+  file:
+    path: "{{ symlink_jdk_version }}"
+    state: absent
+
+- name: Et creation lien symbolique avec new version
+  file:
+    src: "{{ folder_sas_jdk }}/{{unarchived_list.files[0]}}"
+    dest: "{{ symlink_jdk_version }}"
+    state: link
+
+- name: Remplacement du fichier cacerts
+  copy:
+    src: "{{ folder_sas_jdk }}/cacerts"
+    dest: "{{ symlink_jdk_version }}/jre/lib/security/"
+    backup: yes
+    remote_src: yes
+  when: cacerts_create.changed
+
+- name: Suppression fichier cacerts temporaire
+  file:
+    path: "{{ folder_sas_jdk }}/cacerts"
+    state: absent

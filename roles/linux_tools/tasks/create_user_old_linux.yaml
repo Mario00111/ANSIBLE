@@ -1,0 +1,31 @@
+- name: Copie script python on localhost
+  template:
+    src: adduser_rhel45.sh.j2
+    dest: "{{ folder_script }}/add_user.sh"
+    mode: 0775
+  delegate_to: localhost
+  run_once: true
+
+- name: Check SSH known_hosts for {{ inventory_hostname }}
+  local_action: shell ssh-keygen -l -F {{ inventory_hostname }}
+  register: checkForKnownHostsEntry
+  failed_when: false
+  changed_when: false
+  ignore_errors: true
+
+- name: Add {{ inventory_hostname }} to SSH known hosts automatically
+  when: checkForKnownHostsEntry.rc == 1
+  changed_when: checkForKnownHostsEntry.rc == 1
+  local_action: 
+    module: shell
+    args: ssh-keyscan -H "{{ inventory_hostname }}" >> $HOME/.ssh/known_hosts
+
+- name: Script shell create user
+  script: "{{ folder_script }}/add_user.sh {{ inventory_hostname }} {{ user if user == 'admtma' else lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+  register: usercreate
+  ignore_errors: true
+  delegate_to: localhost
+
+- name: Maj OK ou pas
+  set_fact:
+    control_usercreate: "{{ usercreate.rc }}"

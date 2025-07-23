@@ -1,0 +1,15 @@
+- name: Login to a form based webpage, 
+  uri:
+    url: https://192.168.83.10:8443/ihmweb/State.do
+    method: POST
+    body_format: form-urlencoded
+    body:
+      name: admin
+      password: dictao
+    validate_certs: no
+    return_content: yes
+  register: login
+
+- name: Debug attri
+  debug: 
+    msg: "{{ login }}"

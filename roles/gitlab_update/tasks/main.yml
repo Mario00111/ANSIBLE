@@ -1,0 +1,89 @@
+---
+#  1. Vérifier la version actuelle de GitLab
+- name: Vérifier la version actuelle de GitLab
+  command: rpm -q gitlab-ce --qf "%{VERSION}\n"
+  register: current_gitlab_version
+  changed_when: false
+
+- name: Afficher la version actuelle de GitLab
+  debug:
+    msg: "Version actuelle de GitLab: {{ current_gitlab_version.stdout }}"
+
+- name: Arrêter GitLab avant mise a jour
+  command: gitlab-ctl stop
+  ignore_errors: true
+
+#2. Vérifier la dernière version disponible
+- name: Vérifier la dernière version disponible de GitLab
+  command: yum check-update gitlab-ce.x86_64
+  register: latest_gitlab_version
+  changed_when: false
+  failed_when: latest_gitlab_version.rc not in [0, 100] 
+
+- name: Afficher la dernière version disponible
+  debug:
+    msg: "Dernière version disponible: {{ latest_gitlab_version.stdout_lines | select('search', 'gitlab-ce') | list }}"
+
+- name: Extraire uniquement la version GitLab depuis yum check-update
+  set_fact:
+    gitlab_latest_version: "{{ latest_gitlab_version.stdout_lines | select('search', 'gitlab-ce.x86_64') | list | first | regex_replace('^.*?([0-9]+\\.[0-9]+\\.[0-9]+).*$', '\\1') }}"
+
+- name: Créer le dossier de mise à jour pour GitLab
+  file:
+    path: "/datas/gitlab_upgrade_{{ gitlab_latest_version }}"
+    state: directory
+    mode: '0755'
+
+
+- name: Desactiver les sauvegardes automatiques
+  file:
+    path: "{{ item }}"
+    state: touch
+  loop:
+    - /etc/gitlab/skip-unmigrated-data-check
+    - /etc/gitlab/skip-auto-backup
+
+#  3. Déterminer le chemin de mise à niveau automatique
+- name: Déterminer le chemin de mise à niveau
+  set_fact:
+    upgrade_steps: >
+      {%- set version = current_gitlab_version.stdout | regex_replace('GitLab Version: ', '') -%}
+      {%- if version == "17.4.1" -%}
+      ["17.5.5", "17.8.4", "17.9.1"]
+      {%- else -%}
+      []
+      {%- endif -%}
+
+- name: Afficher les étapes de mise à jour prévues
+  debug:
+    msg: "Mises à jour nécessaires: {{ upgrade_steps }}"
+
+#  4. Télécharger et installer les mises à jour dynamiquement
+- name: Télécharger et installer les mises à jour GitLab
+  block:
+    - name: Télécharger GitLab
+      get_url:
+        url: "https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/8/gitlab-ce-{{ item }}-ce.0.el8.x86_64.rpm/download.rpm"
+        dest: "/datas/gitlab_upgrade_{{ latest_gitlab_version.stdout | regex_replace('gitlab-ce-', '') | regex_replace('-ce.*', '') }}/gitlab-ce-{{ item }}.rpm"
+        mode: '0644'
+      loop: "{{ upgrade_steps }}"
+
+    - name: Installer GitLab
+      yum:
+        name: "/datas/gitlab_upgrade/gitlab-ce-{{ item }}.rpm"
+        state: present
+      loop: "{{ upgrade_steps }}"
+
+    - name: Reconfigurer GitLab après installation
+      command: gitlab-ctl reconfigure
+      loop: "{{ upgrade_steps }}"
+
+#  5. Vérifier la version après mise à jour
+- name: Vérifier la version après mise à jour
+  command: rpm -q gitlab-ce
+  register: final_gitlab_version
+  changed_when: false
+
+- name: Afficher la version finale de GitLab
+  debug:
+    msg: "GitLab mis à jour à la version: {{ final_gitlab_version.stdout | regex_replace('GitLab Version: ', '') }}"

@@ -1,0 +1,47 @@
+# Config deploy JDK 
+
+- name: Test existence jdk sur la vm
+  stat: 
+    path: "{{ folder_install }}/{{ version_jdk }}"
+  register: zip_found
+   
+
+- name: Copie du jdk
+  copy:
+   src: "{{ version_jdk }}"
+   dest: "{{ folder_install }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+  when: not zip_found.stat.exists 
+
+- name: Test existence installation jdk
+  stat:
+    path: "{{ folder_oracle }}/{{ version_jdk_short }}"
+  register: jdk_found
+
+- name: Decompression jdk
+  unarchive:
+    src: "{{ folder_install }}/{{ version_jdk }}"
+    dest: "{{ folder_oracle }}"
+    copy: no
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+  when: not jdk_found.stat.exists
+
+- name: Creation lien symbolique
+  file:
+    src: "{{ folder_oracle }}/{{ version_jdk_short }}"
+    dest: "{{ folder_oracle }}/java_current" 
+    state: link
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+    force: yes
+
+- name: Modification java.security entropy
+  lineinfile:
+    path: "{{ folder_oracle }}/{{ version_jdk_short }}/jre/lib/security/java.security"
+    backup: yes
+    regexp: '^securerandom.source=file:/dev/random'
+    line: 'securerandom.source=file:/dev/urandom'
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"

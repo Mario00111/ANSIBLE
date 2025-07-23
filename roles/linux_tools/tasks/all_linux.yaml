@@ -1,0 +1,173 @@
+- name: Check SSH known_hosts for {{ inventory_hostname }}
+  local_action: shell ssh-keygen -l -F {{ inventory_hostname }}
+  register: checkForKnownHostsEntry
+  failed_when: false
+  changed_when: false
+  ignore_errors: true
+
+- name: Add vm to SSH known hosts automatically
+  when: checkForKnownHostsEntry.rc == 1
+  changed_when: checkForKnownHostsEntry.rc == 1
+  local_action: 
+    module: shell
+    args: ssh-keyscan -H "{{ inventory_hostname }}" >> $HOME/.ssh/known_hosts
+
+# - name: Check if user admtma or admtme exists => probleme python avec nombre d os
+#   getent:
+#     database: passwd
+#     key: "{{ user_target }}"
+#   register: user_check
+#   ignore_errors: yes
+#   when:
+#     - inventory_hostname not in groups['RHE6'] and inventory_hostname not in groups['RHE7']
+
+- name: Check if user admtma or admtme
+  shell: getent passwd {{ user_target }}
+  register: user_check
+  ignore_errors: yes
+
+- name: Get current group ID of ansible user
+  command: id -g ansible
+  register: ansible_gid
+  changed_when: false  # This ensures Ansible doesn’t report a change unless an update occurs
+
+- name: Check if GID 1000 already exists
+  command: getent group {{ group_ansible_default }}
+  register: gid_1000_check
+  ignore_errors: true
+
+- name: Check if group exploit already exists
+  command: getent group {{ group_name_3}}
+  register: gid_exploit_check
+  ignore_errors: true
+
+# - name: Set final group GID
+#   set_fact:
+#     group_gid: >-
+#          {{ group_ansible_default if (ansible_gid.stdout | int) != group_ansible_default and gid_1000_check.rc != 0
+#             else group_ansible_fallback }}
+
+- name: Set group_gid based on system conditions
+  set_fact:
+    group_gid: "{{ group_ansible_default }}"
+  when: (ansible_gid.stdout | int) != group_ansible_default and gid_1000_check.rc != 0
+
+- name: Set fallback group_gid if needed
+  set_fact:
+    group_gid: "{{ group_ansible_fallback }}"
+  when: group_gid is not defined
+
+- name: Show ansible_gid.stdout as integer
+  debug:
+    msg: "{{ ansible_gid.stdout | int }}"
+
+- name: Show ansible_gid.stdout as integer
+  debug:
+    msg: "compare ok"
+  when:
+      - ( ansible_gid.stdout | string | trim) == (group_ansible_default | string | trim)
+
+- name: Change group ID of "ansible group" to 1000 or 1003
+  group:
+    name: ansible  # Replace with the actual group name
+    gid: "{{ group_gid }}"      # Replace with the desired GID
+    state: present
+  when:
+      - ( ansible_gid.stdout | string | trim) != (group_ansible_default | string | trim)
+      
+- name: Creation group 1
+  group:
+    name: "{{ group_name_1 }}"
+    gid: "{{ group_number_1 }}"
+    state: present
+  when:
+      - '"admtma" not in user_target and user_check is failed'
+
+- name: Creation group 2
+  group:
+    name: "{{ group_name_2 }}"
+    gid: "{{ group_number_2 }}"
+    state: present
+  when:
+      - '"admtma" in user_target and user_check is failed'
+
+- name: Creation group 3
+  group:
+    name: "{{ group_name_3 }}"
+    gid: "{{ group_number_3 }}"
+    state: present
+  when:
+      - 'gid_exploit_check.rc != 0'
+  ignore_errors: true
+
+- name: Generate a random password tme
+  set_fact:
+    random_passwd: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+  delegate_to: localhost
+  register: password_result
+  when:
+      - '"admtma" not in user_target and user_check is failed'
+
+- name: Generate a random password tma
+  set_fact:
+    random_passwd: "{{ random_passwd_tma }}"
+  delegate_to: localhost
+  register: password_result
+  run_once: true
+  when:
+      - '"admtma" in user_target and user_check is failed'
+
+- name: Mise a jour user with random password
+  user:
+      name: "{{ user_target }}"
+      state: present
+      password: "{{ random_passwd | password_hash('sha512') }}"
+      group: "{{ group_supp }}"
+      groups: "{{ group_name_1 if user_target == 'admtme' else group_name_2 if user_target == 'admtma' }}"
+  ignore_errors: true
+  register: majpasswd
+  when:
+      - "inventory_hostname in lookup('inventory_hostnames','RHE6:RHE7:RHE8:DEB11:DEB12') and user_check is failed"
+
+- name: Maj OK ou pas
+  set_fact:
+    control_majpasswd: "{{ majpasswd.changed }}"
+  when:
+      - 'user_check is failed'
+
+- name: Create a directory if it does not exist
+  file:
+    path: "{{ folder_log }}/{{ environnement_short }}/{{ df }}"
+    state: directory
+    owner: ansible
+    group: ansible
+    mode: '0755'
+  delegate_to: localhost
+  when:
+      - 'user_check is failed'
+
+- name: Touch fichier si absent
+  file:
+    path: "{{ folder_log }}/{{ environnement_short }}/{{ df }}/Adduser_{{ user_target }}_List.csv"
+    owner: ansible
+    group: ansible
+    mode: '0755'
+    state: touch
+  delegate_to: localhost
+  when:
+      - 'user_check is failed'
+
+- name: Ecriture dans fichier
+  lineinfile:
+      path: "{{ folder_log }}/{{ environnement_short }}/{{ df }}/Adduser_{{ user_target }}_List.csv"
+      line: "{{ inventory_hostname }};{{ user_target }};{{ random_passwd }}"
+      insertafter: EOF
+  delegate_to: localhost
+  when:
+      - 'user_check is failed'
+
+- name: Print password test result
+  debug:
+    msg: "Password change for user {{ user_target }} was successful."
+  when:
+      - 'user_check is failed'

@@ -1,0 +1,24 @@
+folder_script: "/home/ansible/scripts/tmp"
+
+folder_log: "/home/ansible/logs/linux_tools"
+
+user_target: "{{ user }}"
+random_passwd_tma: "{{ environnement_short }}_{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+
+group_name_1: "admtme"
+group_number_1: "3000"
+
+group_name_2: "admtma"
+group_number_2: "3001"
+
+group_name_3: "exploit"
+group_number_3: "1112"
+
+group_ansible_default: "1000"
+group_ansible_fallback: "1003"
+
+
+group_supp: "{{ group_name_3 }}"
+
+var_host : "{{ inventory_hostname.split('.')[0] | replace('-','') }}"
+

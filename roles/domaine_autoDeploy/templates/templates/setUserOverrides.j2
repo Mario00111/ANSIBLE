@@ -1,0 +1,18 @@
+#!/bin/bash
+echo "Setting from UserOverrides.sh"
+
+# global settings (for all managed servers)
+export PRODUCTION_MODE=true
+export DERBY_FLAG=false
+
+# customer settings for each Server
+if [ "${SERVER_NAME}" = "AdminServer" ]
+then
+   echo "Customizing USER_MEM_ARGS for SERVER_NAME ${SERVER_NAME}"
+   export USER_MEM_ARGS="-Xms256m -Xmx512m"
+   export JAVA_OPTIONS="$JAVA_OPTIONS -Djava.security.egd=file:/dev/./urandom -Dweblogic.security.SSL.ignoreHostnameVerification=true -Djava.endorsed.dirs=/SOFT/oracle/java_current/jre/lib/endorsed:/SOFT/oracle/wls_121300/oracle_common/modules/endorsed -Djava.awt.headless=true"
+else
+   echo "Customizing USER_MEM_ARGS for SERVER_NAME ${SERVER_NAME}"
+   export USER_MEM_ARGS="-Xms2048m -Xmx2048m "
+   export JAVA_OPTIONS="$JAVA_OPTIONS -Dweblogic.MaxMessageSize=300000000 -Djava.endorsed.dirs=/SOFT/oracle/java_current/lib/endorsed\:/SOFT/oracle/wls_121300/oracle_common/modules/endorsed -Dweblogic.security.SSL.ignoreHostnameVerification=false -Dweblogic.ReverseDNSAllowed=false -Djava.security.egd=file\:/dev/./urandom -Djava.awt.headless=true -Dweblogic.Name=${SERVER_NAME} -XX:+PrintGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:/datas/log/${SERVER_NAME}/logs/gc.log -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=50m -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,address=8453,server=y,suspend=n -Djava.compiler=NONE -Dcpr.jms.log.dir=/datas/cprjms/logs -Dcpr.jms.log.config=INFO -Dweblogic.debug.DebugJNDI=true -Dcom.sun.xml.ws.transport.http.HttpAdapter.dump=true -Dweblogic.file.config=/u01/domains/config/cprjms/ -Xverify:none"
+fi

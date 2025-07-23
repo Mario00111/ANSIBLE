@@ -1,0 +1,91 @@
+###############################################################################
+#####################  CUSTOM VM DOCKER                  #####################
+###############################################################################
+
+
+- name: Installer les paquets LDAP
+  yum:
+    name:
+      - pam_ldap
+      - nss-pam-ldapd
+      - nscd
+      - openldap-clients
+      - oddjob
+      - oddjob-mkhomedir
+    state: present
+  when: ansible_os_family == "RedHat"
+
+
+# - name: Configurer nsswitch.conf pour LDAP
+#   lineinfile:
+#     path: /etc/nsswitch.conf
+#     regexp: '^{{ item.key | regex_escape() }}.*'
+#     line: "{{ item.key }} {{ item.value }}"
+#     backrefs: yes
+#   loop:
+#     - { key: 'passwd:', value: 'files ldap sss' }
+#     - { key: 'shadow:', value: 'files sss' }
+#     - { key: 'group:', value: 'files ldap sss' }
+
+- name: Enable LDAP authentication using authselect
+  command: authselect select sssd with-mkhomedir --force
+
+
+
+- name: Configurer /etc/nsswitch.conf
+  template:
+    src: nsswitch.conf.j2
+    dest: /etc/nsswitch.conf
+
+- name: Configurer /etc/nslcd.conf
+  template:
+    src: nslcd.conf.j2
+    dest: /etc/nslcd.conf
+
+
+
+# - name: Modifier /etc/pam.d/password-auth pour LDAP
+#   lineinfile:
+#     path: /etc/pam.d/password-auth
+#     insertafter: "auth.*required.*pam_env.so"
+#     line: "{{ item }}"
+#   loop:
+#     - "auth        sufficient    pam_ldap.so use_first_pass"
+#     - "password    sufficient    pam_ldap.so use_authtok"
+#     - "session     optional      pam_ldap.so"
+
+- name: Configurer /etc/pam.d/system-auth
+  template: 
+    src: system-auth.j2
+    dest: /etc/pam.d/system-auth
+
+
+- name: Configurer /etc/pam.d/password-auth
+  template: 
+    src: password-auth.j2
+    dest: /etc/pam.d/password-auth
+
+# - name: Modifier /etc/pam.d/system-auth pour LDAP
+#   lineinfile:
+#     path: /etc/pam.d/system-auth
+#     insertafter: "auth.*required.*pam_env.so"
+#     line: "{{ item }}"
+#   loop:
+#     - "auth        sufficient    pam_ldap.so use_first_pass"
+#     - "password    sufficient    pam_ldap.so use_authtok"
+#     - "session     optional      pam_ldap.so"
+
+
+
+- name: Enable oddjob
+  command: systemctl enable --now oddjobd
+
+- name: Redémarrer les services LDAP
+  service:
+    name: "{{item}}"
+    state: restarted
+  loop:
+    - nslcd
+    - nscd  
+
+

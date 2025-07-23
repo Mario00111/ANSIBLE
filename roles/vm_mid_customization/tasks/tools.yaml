@@ -1,0 +1,9 @@
+- name: Install tools packages
+  apt:
+    name:
+      - mlocate
+      - vim
+    state: latest
+    update_cache: yes
+  tags:
+      - tools

@@ -1,0 +1,30 @@
+
+uid nslcd
+gid ldap
+
+uri ldap://adm.cpr.sncf.fr
+uri ldap://ads.cpr.sncf.fr
+
+base DC=cpr,DC=sncf,DC=fr
+
+pagesize 1000
+referrals off
+
+#nss_initgroups_ignoreusers ALLLOCAL
+#nss_getgrent_skipmembers no                       #Optionnel - améliore les performances mais peut poser problème sur RHEL7
+
+ldap_version 3
+
+binddn CN=reqldap_pam,OU=PAM,OU=Compte de services,DC=cpr,DC=sncf,DC=fr
+bindpw {{ ldap_bind_password }}
+tls_reqcert never
+filter passwd (&(objectClass=user)(objectClass=person)(!(objectClass=computer)))
+
+filter group (objectclass=group)
+
+map passwd uid sAMAccountName
+map passwd uidNumber objectSid:S-1-5-21-738162009-139476694-1703228666
+map passwd gidNumber primaryGroupID
+map passwd homeDirectory "/home/$sAMAccountName"
+map passwd loginShell "/bin/bash"
+map passwd member member

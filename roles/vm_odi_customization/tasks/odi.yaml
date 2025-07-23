@@ -1,0 +1,55 @@
+- name: Create temporary installation directory
+  file:
+    path: "{{ tmp_dir }}"
+    state: directory
+    owner: oracle
+    group: oinstall
+    mode: '0755'
+  tags: 
+    - odi
+
+- name: Copy response file
+  copy:
+    src: "{{ folder_local_app }}/ODI/ODI_12.2.1.4_install.rsp"
+    dest: "{{ folder_base_oracle }}{{ folder_install }}"
+    owner: "{{ user_1 }}" 
+    group: "{{ group_1_name }}" 
+    mode: "755"
+  tags: 
+    - odi
+
+- name: Create oraInst.loc file
+  copy:
+    dest: "{{ file_inst_loc }}"
+    content: |
+      inventory_loc={{ folder_oracle_orainventory }}
+      inst_group=oinstall
+    owner: oracle
+    group: oinstall
+    mode: '0777'
+  tags: 
+    - odi
+
+- name: Run ODI installer with response file
+  shell: "{{ folder_java }}/{{ version_jdk_short }}/bin/java -jar {{ folder_base_oracle }}{{ folder_install }}/{{ version_odi }} -silent -responseFile {{ folder_base_oracle }}{{ folder_install }}/ODI_12.2.1.4_install.rsp -invPtrLoc {{ file_inst_loc }}"
+  args:
+    chdir: "{{ tmp_dir }}"
+  become: yes
+  become_user: oracle
+  register: install_output
+  changed_when: "'Successfully Installed' in install_output.stdout"
+  tags: 
+    - odi
+
+- name: Display installation output
+  debug:
+    msg: "{{ install_output.stdout }}"
+  tags: 
+    - odi
+
+- name: Clean up temporary installation files
+  file:
+    path: "{{ tmp_dir }}"
+    state: absent
+  tags: 
+    - odi_clean

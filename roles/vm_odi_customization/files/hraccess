@@ -1,0 +1,3 @@
+## Autorise les membres du groupe hr a relancer les services HRACCESS sans mot de passe
+Cmnd_Alias STARTSTOPHRA = /etc/init.d/hra, /usr/sbin/service, /sbin/service
+%hr    ALL=(root)      NOPASSWD: STARTSTOPHRA

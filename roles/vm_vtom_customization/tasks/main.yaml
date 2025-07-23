@@ -1,0 +1,75 @@
+###############################################################################
+#####################  CUSTOM VM DOCKER                  #####################
+###############################################################################
+
+- name: create partition
+  parted:
+    device: /dev/sdb
+    number: 1
+    flags: [ lvm ]
+    state: present
+
+- name: create partition
+  parted:
+    device: /dev/sdc
+    number: 1
+    flags: [ lvm ]
+    state: present
+
+- name: Include task Add VG/LV create if vg not exists
+  include_role:
+    name: vm_vtom_customization
+    tasks_from: add_vg_lv.yaml
+
+- name: group "vtom" create
+  group:
+    name: "{{ group_name }}"
+    gid: "{{ group_id }}"
+    state: present  
+
+- name: Adding user vtom  
+  user: 
+    name: "{{ user }}"
+    comment: "{{ user_comment }}"
+    group: "{{ group_name }}"
+    uid: "{{ user_id }}"
+    shell: /bin/ksh
+    append: yes
+
+- name: change password
+  user:
+    name: "{{ user }}"
+    state: present
+    password: "{{ password_user | password_hash('sha512') }}"
+
+- name: adding user vtom to group adm
+  user:
+    name: "{{ user }}"
+    groups: "adm"
+    append: yes
+
+- name: adding user vtom to group sudo
+  user:
+    name: "{{ user }}"
+    groups: "sudo"
+    append: yes
+
+- name: adding existing user ansible to group vtom
+  user:
+    name: ansible
+    groups: "{{ group_id }}"
+    append: yes
+
+- copy:
+    src: "bash.bashrc"
+    dest: /etc/bash.bashrc
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+
+- name: Include Tools
+  include_role:
+    name: vm_vtom_customization
+    tasks_from: tools.yaml
+    

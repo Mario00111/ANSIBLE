@@ -1,0 +1,76 @@
+- name: Check Vg custom exist
+  shell: 'lsblk | grep "vg--custom"'
+  register: result-vgcustom
+  ignore_errors: true
+
+- debug:
+    var: ansible_lvm
+
+- name: Debug lvm
+  debug: 
+    var: "result-vgcustom.rc"
+
+- name: Create a volume group on
+  lvg:
+    vg: "{{ vg_name_1 }}"
+    pvs: /dev/sdb1
+    state: present
+  ignore_errors: True
+  failed_when: false
+  no_log: True
+
+- name: Create a logical volume 1
+  lvol:
+    vg: "{{ vg_name_1 }}"
+    lv: "{{ lv_name_1 }}"
+    size: "{{ lv_size_1 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Creafe File System
+  filesystem:
+    fstype: xfs
+    dev: "/dev/{{ vg_name_1 }}/{{ lv_name_1 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_1 }}"
+    state: directory
+    mode: '0755'
+
+- name: Mount Logical volume FS
+  mount:
+    name: "/{{ mount_name_1 }}"
+    src: "/dev/{{ vg_name_1 }}/{{ lv_name_1 }}"
+    fstype: xfs
+    state: mounted
+
+- name: Create a logical volume 2
+  lvol:
+    vg: "{{ vg_name_1 }}"
+    lv: "{{ lv_name_2 }}"
+    size: "{{ lv_size_2 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Creafe File System
+  filesystem:
+    fstype: xfs
+    dev: "/dev/{{ vg_name_1 }}/{{ lv_name_2 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_2 }}"
+    state: directory
+    mode: '0755'
+
+- name: Mount Logical volume FS
+  mount:
+    name: "/{{ mount_name_2 }}"
+    src: "/dev/{{ vg_name_1 }}/{{ lv_name_2 }}"
+    fstype: xfs
+    state: mounted

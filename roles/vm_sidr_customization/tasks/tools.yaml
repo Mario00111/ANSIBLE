@@ -1,0 +1,122 @@
+#- name: Removing any katello package
+#  yum:
+#    name: "*katello*"
+#    state: absent
+#  tags:
+#    - katello_install
+
+- name: Downloading katello agent
+  dnf:
+    name: "https://satellite.cpr.sncf.fr/pub/katello-ca-consumer-latest.noarch.rpm"
+    disable_gpg_check: yes
+    state: present
+  become: true
+  become_method: sudo
+  register: katello
+  tags:
+    - katello_install
+
+- name: Registering the system against Satellite
+  redhat_subscription:
+    state: present
+    activationkey: "KeyCPR"
+    org_id: "CPRPSNCF"
+  become: true
+  become_method: sudo
+  when:
+    - katello is success
+  tags:
+    - katello_install
+
+- name: Enable all repositories starting with satellite-6*
+  rhsm_repository:
+    name: 'satellite-tools-6.*-for-rhel-8-x86_64-rpms'
+    state: enabled
+  become: true
+  ignore_errors: true
+  become_method: sudo
+
+- name: Checking active YUM repositories
+  shell: yum repolist | grep -v This | grep server
+  register: repolist
+  failed_when: repolist == 1
+  become: true
+  become_method: sudo
+  tags:
+    - katello_install
+
+- name: DNF delete java 8
+  dnf:
+    name:  "java-1.8.0-openjdk-headless-1.8.0.412.b08-2.el8.x86_64"
+    state: absent
+  become: true
+  become_method: sudo
+  tags: 
+    - package_delete
+
+- name: Install tools packages
+  dnf:
+    name:
+      - '@Development Tools'
+      - libnsl
+      - java-17-openjdk.x86_64
+    state: latest
+  become: true
+  become_method: sudo
+  tags:
+      - package
+
+- name: DNF update the system
+  dnf:
+    name:  "*"
+    state: latest
+  become: true
+  become_method: sudo
+  tags:
+      - package
+
+- name: creation repertoires
+  file:
+    path: '{{ item }}'
+    state: 'directory'
+    owner: "{{ user_2 }}" 
+    group: "{{ group_2_name }}" 
+    mode: '755'
+  loop:
+    - '{{ folder_oracle }}'
+  tags:
+      - folder_oracle
+  
+- name: install tools oracle client
+  unarchive:
+    src: '{{ folder_local_oracle }}/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_2 }}" 
+    group: "{{ group_2_name }}" 
+    mode: '755'
+  tags:
+      - dezip
+
+- name: install tools oracle sqlplus
+  unarchive:
+    src: '{{ folder_local_oracle }}/instantclient-sqlplus-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_2 }}" 
+    group: "{{ group_2_name }}" 
+    mode: '755'
+  tags:
+      - dezip
+
+- name: install tools oracle 
+  unarchive:
+    src: '{{ folder_local_oracle }}/instantclient-tools-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_2 }}" 
+    group: "{{ group_2_name }}" 
+    mode: '755'
+  tags:
+      - dezip
+
+- name: Reboot
+  ansible.builtin.reboot:
+    reboot_timeout: 1000

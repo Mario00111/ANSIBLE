@@ -1,0 +1,86 @@
+###############################################################################
+#####################  CUSTOM VM DOCKER                  #####################
+###############################################################################
+
+- name: create partition
+  parted:
+    device: /dev/sdb
+    number: 1
+    flags: [ lvm ]
+    state: present
+
+- name: Format partition
+  filesystem:
+    fstype: ext4
+    dev: /dev/sdb1
+    force: yes
+
+# - name: create partition
+#   parted:
+#     device: /dev/sdc
+#     number: 1
+#     flags: [ lvm ]
+#     state: present
+#   when:
+#     - ansible_facts['ansible_distribution'] == "Debian"
+
+# - name: Format partition
+#   filesystem:
+#     fstype: ext4
+#     dev: /dev/sdc1
+#   when:
+#     - ansible_facts['ansible_distribution'] == "Debian"
+
+- name: Include task Add VG/LV create if vg not exists
+  include_role:
+    name: vm_mid_customization
+    tasks_from: add_vg_lv.yaml
+
+- name: Creation group 1
+  group:
+    name: "{{ group_1_name }}"
+    gid: "{{ group_1_number }}"
+    state: present
+
+- name: Adding user 1
+  user:
+    name: "{{ user_1 }}"
+    comment: "{{ user_1_comment }}"
+    group: "{{ group_1_name }}"
+    uid: "{{ user_1_id }}"
+    shell: /bin/bash
+    append: true
+
+- name: change password
+  user:
+    name: "{{ user_1 }}"
+    state: present
+    password: "{{ user_1_password | password_hash('sha512') }}"
+
+- name: Copie conf sudo 
+  copy: 
+    src: "ansible"
+    dest: "/etc/sudoers.d/"
+    owner: root
+    group: root
+    mode: 0644
+  tags: 
+    - Cp_sudoers
+
+- name: Copy bash rc
+  copy:
+    src: "bash.bashrc"
+    dest: /etc/bash.bashrc
+    owner: root
+    group: root
+    mode: 0644
+    backup: true
+
+- name: Include Tools
+  include_role:
+    name: vm_mid_customization
+    tasks_from: tools.yaml
+  tags: 
+    - tools
+  when:
+       - ansible_distribution == "Debian"

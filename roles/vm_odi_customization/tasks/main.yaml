@@ -1,0 +1,75 @@
+###############################################################################
+#####################  CUSTOM VM DOCKER                  #####################
+###############################################################################
+
+- name: create partition
+  parted:
+    device: /dev/sdb
+    number: 1
+    flags: [ lvm ]
+    state: present
+
+- name: Include task Add VG/LV create if vg not exists
+  include_role:
+    name: vm_odi_customization
+    tasks_from: add_vg_lv.yaml
+
+- name: group oinstall create
+  group:
+    name: "{{ group_1_name }}"
+    gid: "{{ group_1_id }}"
+    state: present
+
+- name: Adding user oracle
+  user:
+    name: "{{ user_1 }}"
+    comment: "{{ user_1_comment }}"
+    group: "{{ group_1_name }}"
+    uid: "{{ user_1_id }}"
+    shell: /bin/bash
+    append: true
+
+- name: change password
+  user:
+    name: "{{ user_1 }}"
+    state: present
+    password: "{{ user_1_password | password_hash('sha512') }}"
+
+- name: group "exploit" create
+  group:
+    name: "{{ group_2_name }}"
+    gid: "{{ group_2_id }}"
+    state: present
+
+- name: Adding user {{ user_2 }}
+  user:
+    name: "{{ user_2 }}"
+    comment: "{{ user_2_comment }}"
+    group: "{{ group_2_name }}"
+    uid: "{{ user_2_id }}"
+    shell: /bin/bash
+    append: true
+
+- name: change password {{ user_2 }}
+  user:
+    name: "{{ user_2 }}"
+    state: present
+    password: "{{ user_2_password | password_hash('sha512') }}"
+
+- name: Include task Add tools
+  include_role:
+    name: vm_odi_customization
+    tasks_from: tools.yaml
+  tags:
+    - folder_oracle
+    - package
+    - jdk
+    - sysconfig
+
+- name: Include task ODI
+  include_role:
+    name: vm_odi_customization
+    tasks_from: odi.yaml
+  tags:
+    - odi
+    - odi_clean

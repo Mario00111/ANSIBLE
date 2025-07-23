@@ -1,0 +1,22 @@
+- name: Install tools packages
+  apt:
+    name:
+      - mlocate
+      - vim
+    state: latest
+  tags:
+      - tools
+
+- name: Allow all access from predefine port
+  ufw:
+    rule: allow
+    port: "{{ plage_port_vtom }}"
+    proto: tcp
+
+- name: creation repertoires
+  file: state=directory path="{{ item.p }}" owner="{{ user }}" group="{{ group_name }}" mode=755
+  with_items:
+   - { p: "{{ folder_vtom_bases }}" }
+   - { p: "{{ folder_vtom_logs }}" }
+   - { p: "{{ folder_vtom_trace }}" }
+   - { p: "{{ folder_vtom_backup }}" }

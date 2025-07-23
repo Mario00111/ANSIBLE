@@ -1,0 +1,24 @@
+###############################################################################
+#####################     FICHIER PARAMETRES VTOM         #####################
+###############################################################################
+# VG / LV Config
+vg_name: 'vg-vtom'
+lv_name: 'vtom'
+mount_name: '/mnt/vtom'
+
+# docker var
+user: vtom
+group_number: 1501
+group_name: vtom
+password_user: vtom
+
+# repertoire
+
+# Stockage local des livrables
+#folder_local_app : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/app"
+
+# Env extrat
+env_working : "{{ name_host[:-3] }}"
+
+# Network
+name_host : "{{ inventory_hostname.split('.')[0] }}"

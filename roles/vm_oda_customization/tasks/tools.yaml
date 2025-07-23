@@ -1,0 +1,251 @@
+- name: Downloading katello agent
+  dnf:
+    name: "https://satellite.cpr.sncf.fr/pub/katello-ca-consumer-latest.noarch.rpm"
+    disable_gpg_check: yes
+    state: present
+  become: true
+  become_method: sudo
+  register: katello
+  tags:
+    - katello_install
+
+- name: Registering the system against Satellite
+  redhat_subscription:
+    state: present
+    activationkey: "KeyCPR"
+    org_id: "CPRPSNCF"
+  become: true
+  become_method: sudo
+  when:
+    - katello is success
+  tags:
+    - katello_install
+
+- name: Enable all repositories starting with satellite-6*
+  rhsm_repository:
+    name: satellite-tools-6.*-for-rhel-8-x86_64-rpms
+    state: enabled
+
+- name: Checking active YUM repositories
+  shell: yum repolist | grep -v This | grep server
+  register: repolist
+  failed_when: repolist == 1
+  become: true
+  become_method: sudo
+  tags:
+    - katello_install
+
+- name: Installing katello-agent
+  dnf:
+    name: katello-agent
+    state: present
+  become: true
+  become_method: sudo
+  tags:
+    - katello_install
+
+- name: Vérifier les versions de Java installées
+  ansible.builtin.shell: "rpm -qa | grep -i jdk"
+  register: java_installed
+  changed_when: false
+  ignore_errors: true
+  tags: 
+    - package_delete
+
+- name: Désinstaller les paquets Java via YUM/DNF
+  ansible.builtin.yum:
+    name:
+      - jdk-*
+      - java-*
+      - openjdk-*
+      - oracle-java*
+    state: absent
+  when: java_installed.stdout != ""
+  ignore_errors: true
+  tags: 
+    - package_delete
+
+- name: Supprimer les fichiers et répertoires Java manuels
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /usr/lib/jvm
+    - /opt/java
+    - /usr/java
+    - /var/lib/alternatives/java
+    - /etc/alternatives/java
+  tags: 
+    - package_delete
+
+- name: Supprimer Java des alternatives
+  ansible.builtin.command: "update-alternatives --remove-all java"
+  ignore_errors: yes
+  tags: 
+    - package_delete
+
+- name: Install tools packages
+  dnf:
+    name:
+      - '@Development Tools'
+      - llvm-toolset
+      - libnsl
+      - ksh
+      - xorg-x11-server-Xorg 
+      - xorg-x11-xauth
+      - xorg-x11-apps
+      - xorg-x11-utils
+    state: latest
+  tags:
+      - package
+
+- name: DNF update the system
+  dnf:
+    name:  "*"
+    state: latest
+  tags:
+      - package
+
+- name: creation repertoires
+  file:
+    path: '{{ item }}'
+    state: 'directory'
+    owner: "{{ user_1 }}" 
+    group: "{{ group_1_name }}" 
+    mode: '755'
+  loop:
+    - '{{ folder_java }}'
+    - '{{ folder_oracle }}'
+    - '{{ folder_base_oracle }}{{ folder_install }}'
+    - '{{ folder_oracle_home }}'
+    - '{{ folder_oracle_orainventory }}'
+  tags:
+      - folder_oracle
+  
+- name: install tools oracle client
+  unarchive:
+    src: '{{ folder_local_app }}/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_1 }}" 
+    group: "{{ group_1_name }}" 
+    mode: '755'
+  tags:
+      - dezip
+
+- name: install tools oracle sqlplus
+  unarchive:
+    src: '{{ folder_local_app }}/instantclient-sqlplus-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_1 }}" 
+    group: "{{ group_1_name }}" 
+    mode: '755'
+  tags:
+      - dezip
+
+- name: install tools oracle 
+  unarchive:
+    src: '{{ folder_local_app }}/instantclient-tools-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_1 }}" 
+    group: "{{ group_1_name }}" 
+    mode: '755'
+  tags:
+      - dezip
+
+- name: Test existence jdk sur la vm
+  stat: 
+    path: "{{ folder_java }}{{ version_jdk_short }}"
+  register: jdk_found
+  tags:
+    - jdk
+
+- name: Copie du jdk
+  copy:
+    src: "{{ folder_local_app }}/java/{{ version_jdk }}"
+    dest: "{{ folder_base_oracle }}{{ folder_install }}"
+    mode: '0644'
+  when: not jdk_found.stat.exists
+  tags:
+    - jdk
+
+- name: Extract JDK tar.gz
+  ansible.builtin.unarchive:
+    src: "{{ folder_base_oracle }}{{ folder_install }}/{{ version_jdk }}"
+    dest: "{{ folder_java }}"
+    remote_src: yes
+  when: not jdk_found.stat.exists
+  tags:
+    - jdk
+
+- name: Ajouter Java aux alternatives
+  ansible.builtin.alternatives:
+    name: java
+    path: "{{ folder_java }}/{{ version_jdk_short }}/bin/java"
+    link: /usr/bin/java
+    priority: 1
+  when: not jdk_found.stat.exists
+  tags:
+    - jdk
+
+- name: Ajouter Javac aux alternatives
+  ansible.builtin.alternatives:
+    name: javac
+    path: "{{ folder_java }}/{{ version_jdk_short }}/bin/javac"
+    link: /usr/bin/javac
+    priority: 1
+  when: not jdk_found.stat.exists
+  tags:
+    - jdk
+
+- name: Ajouter Jar aux alternatives
+  ansible.builtin.alternatives:
+    name: jar
+    path: "{{ folder_java }}/{{ version_jdk_short }}/bin/jar"
+    link: /usr/bin/jar
+    priority: 1
+  when: not jdk_found.stat.exists
+  tags:
+    - jdk
+
+- name: Set JAVA_HOME in /etc/profile
+  ansible.builtin.lineinfile:
+    path: /etc/profile
+    regexp: '^export JAVA_HOME='
+    line: 'export JAVA_HOME={{ folder_java }}/{{ version_jdk_short }}'
+    create: yes
+  tags:
+    - jdk
+
+- name: Set JAVA_HOME in /etc/environment
+  ansible.builtin.lineinfile:
+    path: /etc/environment
+    regexp: '^JAVA_HOME='
+    line: 'JAVA_HOME={{ folder_java }}/{{ version_jdk_short }}'
+    create: yes
+  tags:
+    - jdk
+  
+- name: Set JAVA_HOME in /etc/bash.bashrc
+  ansible.builtin.lineinfile:
+    path: /etc/bash.bashrc
+    regexp: '^export JAVA_HOME='
+    line: 'export JAVA_HOME={{ folder_java }}/{{ version_jdk_short }}'
+    create: yes
+  tags:
+    - jdk
+
+- name: Remove temporary JDK tar.gz file
+  ansible.builtin.file:
+    path: "{{ folder_base_oracle }}{{ folder_install }}/{{ version_jdk }}"
+    state: absent
+  tags:
+    - jdk
+
+- name: Modification java.security entropy
+  lineinfile:
+    path: "{{ folder_java }}/{{ version_jdk_short }}/jre/lib/security/java.security"
+    backup: yes
+    regexp: '^securerandom.source=file:/dev/random'
+    line: 'securerandom.source=file:/dev/urandom'
+  tags:
+    - jdk

@@ -1,0 +1,17 @@
+# Creation vm sur cluster vcenter depuis template
+# Prerequis modifs group_vars/hosts/VCENTER_hosts
+
+- name: Create VM 
+  hosts: servers
+  gather_facts: false
+  connection: local
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_VMWARE.yaml
+
+  roles:
+#     - vmware

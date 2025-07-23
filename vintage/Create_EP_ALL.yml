@@ -1,0 +1,135 @@
+# Creation user schema + dump
+
+- name: creation user schema
+  hosts: dbservers
+  remote_user: ansible
+
+  vars_files:
+     - vars_ansible.yaml
+
+  roles:
+     - dbacreate
+     
+- name: Create VM Apache
+  hosts: webservers_vmware
+  gather_facts: false
+  connection: local
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_VMWARE.yaml
+
+  roles:
+     - vmware
+
+- name: Create VM Weblo
+  hosts: weblogicservers_vmware
+  gather_facts: false
+  connection: local
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_VMWARE_WEBLO.yaml
+
+  roles:
+     - vmware
+
+# Creation weblogic server
+
+- name: creation weblogic 12c
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_EP.yaml
+
+  roles:
+     - linux
+     - jdk
+     - weblogic_12c
+     - patch_121300
+
+
+# Creation du domaine
+
+- name: creation domaine
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_EP.yaml
+
+  roles:
+      - domaine_autoDeploy_P1_EP
+      - domaine_autoDeploy_P2_EP
+      - ssl_selfsigned_create
+
+# Creation Apache
+
+- name: Installation Apache
+  hosts: webservers
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_EP.yaml
+
+  roles:
+      - apache_autoDeploy_EP
+
+# Config init et system pour boot auto
+
+- name: configuration init.d tous les hosts
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_EP.yaml
+
+  roles:
+     - configsystemd
+
+- name: configuration init.d AdminServer
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_EP.yaml
+
+  roles:
+     - configsystemdadmin
+
+# relance des serveurs Weblogic
+
+- name: restart weblogic
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_EP.yaml
+
+  roles:
+     - start_stop_weblogic

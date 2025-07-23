@@ -1,0 +1,14 @@
+# Creation du domaine
+
+- name: creation domaine
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_ansible.yaml
+
+  roles:
+     - domaine_autoDeploy

@@ -1,0 +1,76 @@
+# Creation vm weblogic
+
+- name: creation vm weblogic 12.2.1.3.0
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_MOB.yaml
+
+  roles:
+     - linux 
+     - jdk
+     - weblogic_122130_only
+     - patch_122130_only
+
+
+# Creation du domaine
+
+- name: creation domaine
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_MOB.yaml
+
+  roles:
+     - domaine_122
+
+# Config init et system pour boot auto
+
+- name: configuration init.d tous les hosts
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_MOB.yaml
+
+  roles:
+     - configsystemd
+
+- name: configuration init.d AdminServer
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_MOB.yaml
+
+  roles:
+     - configsystemdadmin
+
+# relance des serveurs Weblogic
+
+- name: restart weblogic
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_ansible.yaml
+
+  roles:
+     - start_stop_weblogic

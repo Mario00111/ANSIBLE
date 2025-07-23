@@ -1,0 +1,40 @@
+# Creation du domaine
+
+- name: creation domaine
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_ansible.yaml
+
+  roles:
+     - domaine_osb
+
+- name: configuration init.d tous les hosts
+  hosts: weblogicservers
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_ansible.yaml
+
+  roles:
+     - configsystemd
+
+- name: configuration init.d AdminServer
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_ansible.yaml
+
+  roles:
+     - configsystemdadmin

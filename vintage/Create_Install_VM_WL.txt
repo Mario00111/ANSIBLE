@@ -1,0 +1,25 @@
+##############################################################################################
+                              Install Weblogic Server 121300 
+##############################################################################################
+
+1 VM Physique RHEL 7.8
+ansible-playbook -v Create_VM_WL.yml --inventory-file=group_vars/hosts/VCENTER_hosts
+
+2 Install Weblogic 
+ansible-playbook -v Install_WLS_121300_generic.yml --inventory-file=group_vars/hosts/VCENTER_hosts
+
+3 Install Domaine Weblogic pour DF XXXX
+ansible-playbook -v Create_RGCU.yml --inventory-file=group_vars/hosts/VCENTER_hosts
+
+##############################################################################################
+                              Install Weblogic Server SOA/OSB 122130 
+##############################################################################################
+
+1 VM Physique RHEL 7.8
+ansible-playbook -v Create_VM_WL.yml --inventory-file=group_vars/hosts/VCENTER_hosts
+
+2 Install Weblogic 
+ansible-playbook -v Install_WLS2_122130_SOA_OSB.yml --inventory-file=group_vars/hosts/VCENTER_hosts
+
+3 Install Domaine Weblogic pour DF XXXX
+ansible-playbook -v Create_Domain_OSB.yml --inventory-file=group_vars/hosts/VCENTER_hosts

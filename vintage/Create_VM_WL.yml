@@ -1,0 +1,17 @@
+
+# Creation vm depuis template
+
+- name: Create VM Weblo
+  hosts: weblogicservers_vmware
+  gather_facts: false
+  connection: local
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_VMWARE_WEBLO.yaml
+
+  roles:
+     - vmware

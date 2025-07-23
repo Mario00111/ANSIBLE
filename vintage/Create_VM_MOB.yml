@@ -1,0 +1,35 @@
+# Creation vm sur cluster vcenter depuis template
+# Prerequis modifs group_vars/hosts/VCENTER_hosts
+
+- name: Create VM 
+  hosts: servers
+  gather_facts: false
+  connection: local
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+#     - vars_VMWARE_SUPERVISION.yaml
+#     - vars_VMWARE.yaml
+
+  roles:
+#     - vmware
+
+# Creation vm depuis template
+
+- name: Create VM Weblo
+  hosts: weblogicservers_vmware
+  gather_facts: false
+  connection: local
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_VMWARE_WEBLO.yaml
+
+  roles:
+     - vmware

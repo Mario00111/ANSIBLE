@@ -1,0 +1,57 @@
+# Creation du domaine
+
+- name: creation domaine
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_RGCU.yaml
+
+  roles:
+     - domaine
+
+# Config init et system pour boot auto
+
+- name: configuration init.d tous les hosts
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_RGCU.yaml
+
+  roles:
+     - configsystemd
+
+- name: configuration init.d AdminServer
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_RGCU.yaml
+
+  roles:
+     - configsystemdadmin
+
+# relance des serveurs Weblogic
+
+- name: restart weblogic
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_ansible_wls1213.yaml
+
+  roles:
+     - start_stop_weblogic

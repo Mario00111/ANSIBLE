@@ -1,0 +1,30 @@
+# Creation du domaine
+
+#- name: creation domaine
+#  hosts: weblogicadmin
+#  remote_user: ansible
+#  become: yes
+#  become_user: root
+#  become_method: sudo
+
+#  vars_files:
+#     - vars_EP.yaml
+
+#  roles:
+#      - domaine_autoDeploy_P1_EP
+#      - domaine_autoDeploy_P2_EP
+#      - domaine_autoDeploy_TEST
+#      - ssl_selfsigned_create
+
+- name: Installation Apache
+  hosts: webservers
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_EP.yaml
+
+  roles:
+      - apache_autoDeploy_EP

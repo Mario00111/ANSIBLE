@@ -1,0 +1,14 @@
+###############################################################################
+#####################  AJOUT DISK                         #####################
+###############################################################################
+- name: expand disk in vm
+  vmware_guest_disk:
+    hostname: "{{ vmware_hostname }}"
+    username: "{{ vmware_user }}"
+    password: "{{ vmware_pass }}"
+    validate_certs: no
+    name: "{{ inventory_hostname_short }}"
+    datacenter: "{{ vmware_datacenter }}"
+    disk:
+      - label: "Hard disk 2"
+        state: absent

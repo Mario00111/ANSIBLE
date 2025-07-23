@@ -1,0 +1,20 @@
+###############################################################################
+#####################  AJOUT DISK                         #####################
+###############################################################################
+- name: expand disk in vm
+  vmware_guest_disk:
+    hostname: "{{ vmware_hostname }}"
+    username: "{{ vmware_user }}"
+    password: "{{ vmware_pass }}"
+    validate_certs: no
+    name: "{{ inventory_hostname_short }}"
+    datacenter: "{{ vmware_datacenter }}"
+    disk:
+      - size_gb: "{{ vm_disk_1_gb }}"
+        type: "{{ vm_disk_type }}"
+        datastore: "{{ vm_disk_datastore }}"
+        state: present
+        scsi_controller: "{{ vm_disk_scsi_controller }}"
+        scsi_type: "{{ vm_disk_scsi_type }}"
+        unit_number: "{{ vm_disk_1_scsi_unit }}"
+        disk_mode: "{{ vm_disk_mode }}"

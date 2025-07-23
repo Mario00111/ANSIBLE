@@ -1,0 +1,77 @@
+- name: vm info
+  vmware_guest_info:
+    hostname: '{{ vmware_hostname }}'
+    username: '{{ vmware_user }}'
+    password: '{{ vmware_pass }}'
+    validate_certs: no
+    name: "{{ inventory_hostname_short }}"
+    datacenter: "{{ vmware_datacenter }}"
+  register: vm_infos
+
+- name: Debug attri
+  debug: 
+    msg: "{{ vm_infos }}"
+
+- name: Set variable
+  set_fact:
+    moid: “{{ vm_infos.instance.moid }}”
+
+
+- name: Debug des variables custom attributes
+  debug:
+    var: custom_1_name
+
+
+- name: Configure custom attributes
+  vmware_guest_custom_attributes:
+    hostname: '{{ vmware_hostname }}'
+    username: '{{ vmware_user }}'
+    password: '{{ vmware_pass }}'
+    validate_certs: no
+    name: "{{ inventory_hostname_short }}"
+    moid: "{{ moid }}"
+    folder: "{{ vmware_folder }}"
+    state: present
+    attributes:
+      - name: "{{ custom_1_name }}"
+        value: "{{ custom_1_value }}"
+      - name: "{{ custom_2_name }}"
+        value: "{{ custom_2_value }}"
+  register: custom
+
+- name: Debug attri
+  debug: 
+    msg: "{{ custom }}"
+
+#- name: Add Tag '{{ tag_name }}' to VMs
+#  vmware_tag_manager:
+#    hostname: '{{ vmware_hostname }}'
+#    username: '{{ vmware_user }}'
+#    password: '{{ vmware_pass }}'
+#    validate_certs: no
+#    tag_names:
+#        - "{{ tag_applications }}:{{ tag_app_name }}"
+#        - "{{ tag_envrionnement }}:{{ tag_env_name }}"
+#        - "{{ tag_middleware }}:{{ tag_mid_name }}"
+#    object_name: "{{ inventory_hostname_short }}"
+#    object_type: VirtualMachine
+#    state: add
+#    delegate_to: localhost
+
+- name: Add Tag to VMs
+  vmware_tag_manager:
+    hostname: '{{ vmware_hostname }}'
+    username: '{{ vmware_user }}'
+    password: '{{ vmware_pass }}'
+    validate_certs: no
+    tag_names:
+        - "Applications:{{ tag_app }}"
+        - "Environnement:{{ tag_env }}"
+        - "Middleware:{{ tag_midd }}"
+    object_name: "{{ inventory_hostname_short }}"
+    object_type: VirtualMachine
+    state: add
+  delegate_to: localhost
+  tags: 
+      - tags_vm
+

@@ -1,0 +1,17 @@
+- name: Send e-mail information creation vm
+  mail:
+    host: mailsmtp.cpr.local
+    port: 25
+    from: 'tot-admin@ansible.fr'
+    #to: '{{ mail_mid  }}'
+    to: '{{ mail_inf  }}'
+    #to: 'romaric.paoli@cprpf.fr'
+    subject: '[System] Ansible-report : Creation nouvelle'
+    subtype: html
+    body: |
+        <p>Bonjour,</p>
+        <p>La vm <font color="#009900"><strong>{{ inventory_hostname }} => {{ ansible_host }}</strong></font> a été créée</p>
+        <p>OS : {{ ansible_distribution }} </p>
+        <p>Composants sécurité : Sentinel one, Cyberwatch installés</p>
+  run_once: true
+  delegate_to: localhost

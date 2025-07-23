@@ -1,0 +1,96 @@
+###############################################################################
+#####################  DEPLOIEMENT VM                     #####################
+###############################################################################
+- name: Charger les variables globales
+  include_vars:
+    file: inventories/generic_vars/vars_SA_ALL.yaml
+
+- name: Pause entre chargement fichier vars
+  pause:
+    seconds: 5
+
+- name: Charger les variables globales
+  include_vars:
+    file: inventories/{{ env_long }}/group_vars/{{ vars_upper }}
+
+- name: Create VM from template
+  vmware_guest:
+    hostname: "{{ vmware_hostname }}"
+    username: "{{ vmware_user }}"
+    password: "{{ vmware_pass }}"
+    validate_certs: no
+    hardware:
+      memory_mb: "{{ ram_var }}"
+      num_cpus: "{{ cpu_var }}" 
+#      num_cpu_cores_per_socket: 3
+#      scsi: paravirtual
+#      memory_reservation_lock: true
+#      mem_limit: 8096
+#      mem_reservation: 4096
+#      cpu_shares_level: "high"
+#      mem_shares_level: "high"
+#      cpu_limit: 8096
+#      cpu_reservation: 4096
+#      max_connections: 5
+#      hotadd_cpu: true
+#      hotremove_cpu: true
+#      hotadd_memory: false
+#      version: 12 # Hardware version of virtual machine
+#      boot_firmware: "efi"
+    networks:
+      - name: "{{ network_type }}"
+        ip: "{{ ansible_host }}"
+        type: static
+        netmask: "{{ cpr_netmask }}"
+        gateway: "{{ cpr_gateway }}"
+        domain: "{{ cpr_domain }}"
+        start_connected: true
+    customization:
+        existing_vm: true
+        autologon: true
+        hostname: "{{ inventory_hostname_short }}"
+        domain: "{{ cpr_domain_all }}"
+        dns_servers:
+          - "{{ cpr_dns_servers1 }}"
+          - "{{ cpr_dns_servers2 }}"
+    wait_for_customization: true
+    folder: "/{{ folder_vcenter }}"
+    name: "{{ inventory_hostname_short }}"
+    datacenter: "{{ vmware_datacenter }}"
+    template: "{{ vmware_template }}"
+    state: poweredon
+  delegate_to: localhost
+
+- name: Wait VM system reachable
+  wait_for_connection:
+    connect_timeout: 20
+    sleep: 5
+    delay: 5
+    timeout: 600
+  delegate_to: localhost
+
+- name: Include task Add 2 disk only OPTIONNEL
+  include_role:
+    name: vmware
+    tasks_from: add_two_disk.yaml
+  when:
+    - '"DEB" in vmware_template'
+
+- name: Include task Add 1 disk only OPTIONNEL
+  include_role:
+    name: vmware
+    tasks_from: add_one_disk.yaml
+  when:
+    - '"RHE" in vmware_template'
+
+- name: Include task custom attributes
+  include_role:
+    name: vmware
+    tasks_from: custom_attributes.yaml
+
+- name: Wait VM system reachable
+  wait_for_connection:
+
+- name: Pause après le premier playbook
+  pause:
+    seconds: 20

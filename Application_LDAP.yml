@@ -1,0 +1,10 @@
+- name: Appliquer la configuration LDAP sur une machine existante
+  hosts: "{{ df }}"
+  gather_facts: true
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  roles:
+     - vm_mid-LDAP_customization

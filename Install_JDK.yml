@@ -1,0 +1,19 @@
+# Creation vm weblogic
+
+- name: Install JDK
+  hosts: "{{ host }}"
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars:
+      folder_local_jdk: '/datas/Livrables/Java'
+      folder_sas_jdk: '/usr/java'
+      symlink_jdk_version: '/usr/java/latest'
+      file_cacerts: '/usr/java/latest/jre/lib/security/cacerts'
+      version_jdk_short: "{{ jdk_var }}"
+      version_jdk_long: "{{ jdk_var }}.tar.gz"
+      
+  roles:
+    - jdk_alone
+

@@ -1,0 +1,44 @@
+---
+- name: General playbook to manage VM lifecycle
+  hosts: localhost
+  gather_facts: false
+  vars:
+    dnsname: "{{ dnsname }}"
+    action: "{{ action }}"
+    df: "{{ df }}"
+    vcenter_target: "{{ vcenter_target }}"
+    os: "{{ os }}"
+
+  tasks:
+
+    - name: Charger les variables globales
+      include_vars:
+        file: inventories/generic_vars/vars_SA_ALL.yaml
+        
+    - name:  Gestion des adresses IP et DNS
+      include_role:
+        name: ip_dns_package
+      vars:
+        dnsname: "{{ dnsname }}"
+        action: "{{ action }}"
+    - name: Pause après le premier playbook
+      pause:
+        seconds: 10
+
+
+- import_playbook: Create_VM_FromInventories.yml        
+
+
+- hosts: '{{ df }}'
+  gather_facts: true
+  become: yes
+  remote_user: ansible
+  become_user: root
+  become_method: sudo
+  tasks:
+
+    - name:  Customisation de la VM selon DF
+      include_role: 
+        name: customize_VM
+
+

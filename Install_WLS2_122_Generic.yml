@@ -1,0 +1,18 @@
+# Creation vm weblogic
+
+- name: creation vm weblogic 12.2.1.X.X
+  hosts: '{{ typesa_app_var }}'
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - inventories/generic_vars/vars_SA_ALL.yaml
+     
+  roles:
+     - linux 
+     - jdk
+     - weblogic_122	
+     - patch_122
+

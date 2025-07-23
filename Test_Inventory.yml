@@ -1,0 +1,12 @@
+- name: Test inventory VM 
+  hosts: localhost
+  gather_facts: yes
+  remote_user: ansible
+
+  tasks:
+      #- name: gather list
+        #set_fact:
+          #vmlist: "{{ lookup('env','vcenter_host') }}"
+
+  - debug:
+          var: vars.groups.EPP_DK01

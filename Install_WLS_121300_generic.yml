@@ -1,0 +1,19 @@
+# Creation vm weblogic
+
+- name: creation vm weblogic 12c
+  hosts: weblogicadmin
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+#     - vars_EP.yaml
+      - vars_SA_ALL.yaml
+
+  roles:
+     - linux 
+     - jdk
+     - weblogic_12c
+     - patch_121300
+

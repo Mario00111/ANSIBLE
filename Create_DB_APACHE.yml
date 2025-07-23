@@ -1,0 +1,26 @@
+# Creation user schema + dump
+
+- name: creation user schema
+  hosts: dbservers
+  remote_user: ansible
+
+  vars_files:
+     - vars_ansible.yaml
+
+  roles:
+     - dbacreate
+
+# Creation Apache
+
+- name: Installation Apache
+  hosts: webservers
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_EP.yaml
+
+  roles:
+      - apache_autoDeploy_EP

@@ -1,0 +1,12 @@
+- name: Create User
+  hosts: '{{ df }}'
+  gather_facts: false
+  remote_user: ansible
+  become: true
+  become_user: root
+  become_method: sudo
+
+
+  roles:
+      - linux_tools
+  

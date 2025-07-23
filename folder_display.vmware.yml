@@ -1,0 +1,15 @@
+plugin: vmware_vm_inventory
+strict: False
+hostname: "weblovcenter65.cpr.sncf.fr"
+username: ansible@vsphere.local
+password: Zj]h&3OFD9d2YQccbSK
+validate_certs: False
+with_tags: true
+hostnames:
+- config.name
+resources:
+  - datacenter:
+    - DC-Weblo
+    resources:
+    - folder:
+      - ENV INT

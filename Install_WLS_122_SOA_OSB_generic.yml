@@ -1,0 +1,20 @@
+# Creation vm weblogic 12.2 + SOA + OSB + Patch WLS (Opatch) + Patch SOA/OSB
+
+- name: creation vm weblogic 12.2
+  hosts: '{{ typesa_app_var }}'
+  remote_user: ansible
+  become: yes
+
+  vars_files:
+     -  inventories/generic_vars/WEBLOGIC.yaml
+
+  roles:
+     - linux 
+     - jdk
+     - weblogic_122
+     - soa_122
+     - osb_122
+     - ohs_122
+     - patch_122
+     - patch_soa_osb_122
+

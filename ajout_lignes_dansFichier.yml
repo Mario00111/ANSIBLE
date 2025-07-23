@@ -1,0 +1,16 @@
+- name: Ajouter une ligne dans tous les fichiers YAML inventories
+  hosts: localhost
+  tasks:
+    - name: Parcourir tous les fichiers YAML dans group_vars
+      ansible.builtin.find:
+        paths: "inventories/qualification/group_vars"
+        patterns: "*.yml"
+        file_type: file
+      register: yaml_files
+
+    - name: Ajouter une ligne à chaque fichier YAML
+      ansible.builtin.lineinfile:
+        path: "{{ item.path }}"
+        line: "# VLAN"
+      loop: "{{ yaml_files.files }}"
+      when: yaml_files.matched > 0

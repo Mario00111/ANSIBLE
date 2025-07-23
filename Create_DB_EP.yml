@@ -1,0 +1,11 @@
+# Creation user schema + dump
+
+- name: creation user schema 
+  hosts: dbservers
+  remote_user: ansible
+
+  vars_files:
+     - vars_ansible.yaml
+
+  roles:
+     - dbacreate

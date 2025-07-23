@@ -1,0 +1,43 @@
+plugin: community.vmware.vmware_vm_inventory
+strict: False
+#hostname: 10.8.36.25
+#username: administrator@vsphere.local
+#password: "2gJ.aGq8AU*tPAaii_"
+hostname: "vcenter65.cpr.sncf.fr"
+username: ansible@vsphere.local
+password: Zj]h&3OFD9d2YQccbSK
+validate_certs: False
+with_tags: true
+#plugin: vmware_vm_inventory
+#strict: False
+
+# with_tags: true
+# keyed_groups:
+#   - key: tags
+#     prefix: "vmware_tag_"
+#     separator: ""
+# hostnames:
+# - 'config.name'
+# #properties:
+# #- 'name'
+# #- 'guest.ipAddress'
+# #- 'config.name'
+# #- 'config.uuid'
+# groups:
+#   vmware: true
+# filters:
+#   - "'Integration' in tags"
+#   - "'WL' in tags"
+#   - runtime.powerState == "poweredOn"
+# #properties:
+#    - 'name'
+ #   - 'config.name'
+#    - 'guest.toolsStatus'
+#    - 'guest.toolsRunningStatus'
+#hostnames:
+#    - config.name
+#keyed_groups:
+#    - key: guest.toolsStatus
+#      separator: ''
+#    - key: guest.toolsRunningStatus
+#      separator: ''

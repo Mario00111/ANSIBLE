@@ -1,0 +1,11 @@
+- name: Contrôle nommage DNS
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Charger les variables globales
+      include_vars:
+        file: inventories/generic_vars/vars_SA_ALL.yaml
+
+    - name: Exécuter les rôles pour la gestion IP/DNS
+      include_role:
+        name: ip_dns_package

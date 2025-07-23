@@ -1,0 +1,43 @@
+- name: Test SSH connection to all hosts
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Check SSH known_hosts for {{ inventory_hostname }}
+      local_action: shell ssh-keygen -l -F {{ inventory_hostname }}
+      register: checkForKnownHostsEntry
+      failed_when: false
+      changed_when: false
+      ignore_errors: true
+
+    - name: Add vm to SSH known hosts automatically
+      when: checkForKnownHostsEntry.rc == 1
+      changed_when: checkForKnownHostsEntry.rc == 1
+      local_action: 
+        module: shell
+        args: ssh-keyscan -H "{{ inventory_hostname }}" >> $HOME/.ssh/known_hosts
+
+    # - name: Ping test
+    #   ansible.builtin.ping:
+    #   register: ping_result
+    #   ignore_errors: yes
+
+    # - name: Save results to a file
+    #   ansible.builtin.lineinfile:
+    #     path: /home/ansible/logs/ansible_ssh_test_results.txt
+    #     create: yes
+    #     line: "{{ inventory_hostname }}: {{ 'Success' if ping_result.ping is defined else 'Failed' }}"
+    #     state: present
+    #   delegate_to: localhost
+
+    - name: Check SSH connectivity using raw command
+      ansible.builtin.raw: "echo 'SSH Connection Successful'"
+      register: ssh_result
+      ignore_errors: yes
+
+    - name: Save results to a file
+      ansible.builtin.lineinfile:
+        path: /tmp/ansible_ssh_test_results.txt
+        create: yes
+        line: "{{ inventory_hostname }}: {{ 'Success' if ssh_result.rc == 0 else 'Failed' }}"
+        state: present
+      delegate_to: localhost

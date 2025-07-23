@@ -1,0 +1,14 @@
+# Patch serveur weblogic 12.1.3.0.0
+
+- name: creation vm weblogic 12c
+  hosts: weblogicservers
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_EP.yaml
+
+  roles:
+     - patch_121300

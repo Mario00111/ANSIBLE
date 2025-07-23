@@ -1,0 +1,13 @@
+# Creation vm weblogic
+
+- name: Install Docker and +
+  hosts: '{{ typesa_app_var }}'
+  gather_facts: false
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  roles:
+    - docker_package
+

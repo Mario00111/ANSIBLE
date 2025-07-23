@@ -1,0 +1,13 @@
+- name: restart weblogic
+  hosts: weblogicservers
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars_files:
+     - vars_EP.yaml
+
+  roles:
+#     - start_stop_weblogic
+     - linux

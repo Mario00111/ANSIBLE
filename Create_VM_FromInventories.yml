@@ -1,0 +1,31 @@
+- name: Create VM 
+  hosts: '{{ df }}'
+  gather_facts: true
+  connection: local
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  
+  #vars:
+  # - tab_inventaire:
+  #    P: 
+
+#  vars_prompt:
+
+#  - name: inventaire
+#    prompt: "Environnement cible (P.production/PP.preproduction/Q.qualification/I.integration/D.developpement)"
+#    private: no
+
+#  - name: Persistance inventaire
+#  set_fact:
+#    confirmation_del : "{{'true' inventaire.user_input | regex_search('P|pro|production|PP|pre|preproduction|Q|qua|qualification|I|int|integration|D|dev|developpement') else 'false'}}"
+
+  vars_files:
+#     - inventories/{{ inventaire }}/hosts.ini
+      - inventories/generic_vars/VCENTER_{{ vcenter_target }}.yaml
+
+  roles:
+    - vmware
+

@@ -1,0 +1,52 @@
+- name: Update apt repositories and cache on server
+  apt:
+    update_cache: yes
+    force_apt_get: yes
+    cache_valid_time: 3600
+
+- name: Install tools packages
+  apt:
+    name:
+      - mlocate
+      - vim
+      - apt-transport-https
+      - ca-certificates
+      - lsb-release
+      - python3-pip
+      - python3-setuptools
+      - python3-venv
+      - python3-dev
+      - python3-virtualenv
+      - python3-pil
+      - gnupg
+      - curl
+      - software-properties-common
+      - build-essential
+    state: latest
+    update_cache: yes
+  tags:
+      - tools
+
+- name: Remove file 
+  file:
+    path: /usr/lib/python3.11/EXTERNALLY-MANAGED
+    state: absent
+
+- name: Install pdf417 and pillow
+  pip:
+    name: 
+      - pdf417
+  tags:   
+      - tools
+
+- name: Copy bash rc user 1
+  copy:
+    src: "bash.bashrc"
+    dest: "/home/{{ user_1 }}/.bashrc"
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}"
+    mode: 0644
+    backup: true
+  tags:
+      - tools_bash
+

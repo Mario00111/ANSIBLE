@@ -1,0 +1,16 @@
+29/09/2017 10:36:41 (20598) : ************Lancement du Shell Transfert_EDMS.sh avec les paramètres : /datas/recette/m13/td/edms/KID/SAS_EDMS/ /KSL/ARCHIVE
+29/09/2017 10:36:41 (20598) : Nombre de fichier à transférer : 41
+29/09/2017 10:36:41 (20598) : Nombre de fichier transférés : 0
+Erreur sur le transfert du fichier vers EDMS, au moins un fichier n a pas été transféré
+29/09/2017 10:38:18 (20647) : ************Lancement du Shell Transfert_EDMS.sh avec les paramètres : /datas/recette/m13/td/edms/KID/SAS_EDMS/ /KSL/ARCHIVE
+29/09/2017 10:38:18 (20647) : Nombre de fichier à transférer : 49
+29/09/2017 10:38:18 (20647) : Nombre de fichier transférés : 0
+Erreur sur le transfert du fichier vers EDMS, au moins un fichier n a pas été transféré
+29/09/2017 10:43:55 (20733) : ************Lancement du Shell Transfert_EDMS.sh avec les paramètres : /datas/recette/m13/td/edms/KID/SAS_EDMS/ /KSL/ARCHIVE
+29/09/2017 10:43:55 (20733) : Nombre de fichier à transférer : 57
+29/09/2017 10:43:55 (20733) : Nombre de fichier transférés : 0
+Erreur sur le transfert du fichier vers EDMS, au moins un fichier n a pas été transféré
+29/09/2017 10:48:09 (20807) : ************Lancement du Shell Transfert_EDMS.sh avec les paramètres : /datas/recette/m13/td/edms/KID/SAS_EDMS/ /KSL/ARCHIVE
+29/09/2017 10:48:09 (20807) : Nombre de fichier à transférer : 8
+29/09/2017 10:48:09 (20807) : Nombre de fichier transférés : 0
+Erreur sur le transfert du fichier vers EDMS, au moins un fichier n a pas été transféré

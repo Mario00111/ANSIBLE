@@ -1,0 +1,1287 @@
+#!/bin/ksh
+#set +x
+#**********************************************************************************************************
+#	
+# Prog initial : 			ksl4vip
+# lancement et arret:			/editique/bin/creksl4vip pour lancement et releksl4vip pour arret
+# Date : 				22/08/2008
+# Auteur : 				Yann Kloniecki (CPR) 
+# Date de derniere modification:	22/12/2007
+# Objet de la modif:			Correction de valeurs de code retour d'erreur
+#
+# Description:				Dmon de traitement des editions formattees par KSL 
+#  					envoi des impressions sur serveur Impression VIP_EMTEX
+# 					les editions internes sont deposees directement dans le sas 
+#					/IMPMSA/afpprod ou afptest/int/KSLDP525 ou KSLDP92C
+# 					les editions MSP sont deposees sans le sas /IMPMSA/afpprod ou afptest/msp/KSLDP525 ou KSLDP92C
+#					par le proc-transfert de prod ou de test de Process Manager appele par un binaire Process Manager
+#					a la suite de PgoPm.sh ou TgoPM.sh.
+# Fichiers logs:			sur devedi: /var/pd/edition/dmonimp.log pour ksl4vip
+#					sur devedi: /IMPMSA/logs/PgoPM.log en prod ou /IMPMSA/logs/TgoPM.log pour PgoPM.sh ou TgoPM.sh
+#					sur devedi: /pmdata/logs/Traces_Prod.log ou Traces_Test.log  pour les proc-transfert de prod ou de test.
+# Severite de modification:		Tres importante
+# Precautions:				Ne pas modifier. inconsiderement. Un dysfonctionnement peut bloquer toute la chaine de traitement des editions.
+#
+# Serveurs impliques:			Machines ATD de PROD, D'INTEGRATION, de RECETTE et de PREPROD qui abritent les sas de reception 
+#					des fichiers d'editions. (projet SPIRIT)
+#					Serveur editique ( fonctionnement indispensable du moteur KSL et des services associes pour la partie 
+#					formattage des documents) et qui abrite les sas de receptions des editions a formatter ainsi que les sas de mise
+#					a disposition des fichiers d'impression formattes a destination du serveur d'impression.
+#					Serveur epc610 pour la partie traitement de Mise sous PLIS
+#					Serveur d'impression VIP-EMTEX 
+#					Serveur des sas de mise a disposition utilisateurs (/DIRECTION/msa) 
+#					Serveur de declenchement des sauvegardes des bases oracle KSL (arret et redemarrage du serveur KSL depuis
+#					l'appel des shells /editique/ksl/stopksl.sh et startksl.sh) Arret et redemarrage du serveur KSL, TOMCAT, 
+#					serveur de licenses et services KSL.
+# Contraintes:				Repertoires epc610.cpr.sncf.fr:/pmdata et sfmdirection:/Volumes/Data/MSA accessibles depuis editique
+#					Repertoires editique.cpr.sncf.fr:/IMPMSA et sfmdirection:/Volumes/Data/MSA accessibles depuis epc610
+# Infos annexes:			/DATASOFT sous editque heberge les maquettes et paragraphes .DOC et .XML (reflet de /DATASOFT des
+#					serveurs ATD) pour formattage des documents par le moteur KSL.
+#
+#**********************************************************************************************************
+
+################################################################################
+#  Declaration des fonctions                                                   						     #
+################################################################################
+
+##########
+# Fonction de Chargement d'une variable depuis le fichier de configuration /devedi/bin/ini/config.ini
+#
+charge_variable_config ()
+{
+  NOM_GROUPE=$1
+  NOM_VARIABLE=$2
+
+  # Decompte du nombre de lignes du fichier de configuration
+  nombrelignes=$(cat $FichierConfiguration | wc -l 2>&1)
+
+  niveaux=$(cat $FichierConfiguration | egrep -n "\[[/]*$NOM_GROUPE\]")
+  if [[ -z $niveaux ]]
+  then
+	VALEUR_VARIABLE="ERREUR"
+  else
+	  niveauhaut=$(echo "$niveaux" | head -1 | cut -d":" -f1)
+	  niveaubas=$(echo "$niveaux" | tail -1 | cut -d":" -f1)
+	  scrutagehaut=$(expr $nombrelignes - $niveauhaut 2>&1)
+	  scrutagebas=$(expr $niveaubas - $niveauhaut - 1 2>&1)
+  
+	  CHAMPS_VARIABLE=$(cat $FichierConfiguration | \
+	   tail -$scrutagehaut | head -$scrutagebas | egrep "^$NOM_VARIABLE=" 2>&1)
+	 
+	  # Filtre uniquement la partie 'VALEUR' de l'expression NOM=[VALEUR]
+	  VALEUR_VARIABLE=${CHAMPS_VARIABLE#*=}
+  fi	
+  echo $VALEUR_VARIABLE
+ 
+  return 0
+} ## Fin charge_variable_config () ##
+
+#--------------------------------------------------------------
+# init du fichier log
+#--------------------------------------------------------------
+echo "" > /var/pd/edition/dmonimp.log
+
+#------------------------------------------------------------------
+# variables programme
+#------------------------------------------------------------------
+
+VIPIN=/afpdata/pmp2vip/in
+# repertoire des fichiers de config
+FICINIT=/editique/bin/ini
+#
+#------------------------------------------------------------
+# Fichier de configuration general
+#------------------------------------------------------------
+FichierConfiguration=/editique/bin/ini/general.ini
+
+if [ ! -s "$FichierConfiguration" ]
+then
+  echo "[ERREUR] Le fichier de configuration $FichierConfiguration n'existe pas ou est vide." >> /var/pd/edition/dmonimp.log
+  exit 3
+fi	
+etiquetteTech="TECHNIQUE"
+repAtraiter=$(charge_variable_config $etiquetteTech "REPASCRUTER")
+repAisoler=$(charge_variable_config $etiquetteTech "REPAISOLER")
+echo "Repertoires scrutes: $repAtraiter" >> /var/pd/edition/dmonimp.log
+echo "Repertoires isoles : $repAisoler" >> /var/pd/edition/dmonimp.log
+ImpPageApage=$(charge_variable_config $etiquetteTech "IMPPAP")
+ImpContinue=$(charge_variable_config $etiquetteTech "IMPCONT")
+
+#------------------------------------------------------------
+# Fichier de configuration des champs 
+# pour les etiquettes des valeurs du .JS
+#------------------------------------------------------------
+FichierConfiguration=/editique/bin/ini/champsPRF.ini
+
+if [ ! -s "$FichierConfiguration" ]
+then
+  echo "[ERREUR] Le fichier de configuration $FichierConfiguration n'existe pas ou est vide." >> /var/pd/edition/dmonimp.log
+  exit 4
+fi	
+#------------------------------------------------------------------
+# variables nom des champs du fichier JS
+# champsPRF.ini a mapper pour construire le .JS
+#------------------------------------------------------------------
+etiquettePRF="NOM_CHAMPS_PRF"
+#--------------------------------------------------------------------------------------------
+# On recherche la bonne etiquette dans le fichier de config
+# sous /editique/bin/ini/champsPRF.ini et on charge les valeurs  dans
+# les variables pour construire les valeurs des champs
+#--------------------------------------------------------------------------------------------				
+		
+VIP_TYPE=$(charge_variable_config $etiquettePRF "PRF_TYPE")=
+VIP_FILE=$(charge_variable_config $etiquettePRF "PRF_FILE")=
+VIP_OUTPUT=$(charge_variable_config $etiquettePRF "PRF_OUTPUT")=
+VIP_SEPCOUNT=$(charge_variable_config $etiquettePRF "PRF_SEPCOUNT")=
+VIP_FORM=$(charge_variable_config $etiquettePRF "PRF_FORM")=
+VIP_USERCOLUMN1=$(charge_variable_config $etiquettePRF "PRF_USERCOLUMN1")=
+VIP_USERCOLUMN2=$(charge_variable_config $etiquettePRF "PRF_USERCOLUMN2")=
+VIP_FORMDEF=$(charge_variable_config $etiquettePRF "PRF_FORMDEF")=
+VIP_PAGEDEF=$(charge_variable_config $etiquettePRF "PRF_PAGEDEF")=
+VIP_PAGECONTROL=$(charge_variable_config $etiquettePRF "PRF_PAGECONTROL")=
+VIP_SET=$(charge_variable_config $etiquettePRF "PRF_SET")=
+VIP_QUEUE=$(charge_variable_config $etiquettePRF "PRF_QUEUE")=
+VIP_PAGECOUNT=$(charge_variable_config $etiquettePRF "PRF_PAGECOUNT")=
+VIP_NAME=$(charge_variable_config $etiquettePRF "PRF_NAME")=
+
+# repositionne le nom du fichier de config pour les documents
+
+FichierConfiguration=/editique/bin/ini/config.ini
+
+if [ ! -s "$FichierConfiguration" ]
+then
+  echo "[ERREUR] Le fichier de configuration $FichierConfiguration n'existe pas ou est vide." >> /var/pd/edition/dmonimp.log
+  exit 4
+fi	
+#--------------------------------------------------------------
+# init du fichier log
+#--------------------------------------------------------------
+#echo "" > /var/pd/edition/dmonimp.log
+
+#--------------------------------------------------------------
+# boucle sans fin pour scrutation des repertoires
+# trouves dans le fichier de config general
+# /editique/bin/ini.genaral.ini dans l'etiquette
+ # [TECHNNIQUE] champs: REPASCRUTER
+# (/recette/, /integration/, /prod/, /preprod/
+#--------------------------------------------------------------
+while true
+do
+	#---------------------------------------------------
+	# date et heure de traitement
+	#---------------------------------------------------
+	heureTrait="`date +%Hh +%Mmn +%Ss`"
+	dateTrait="`date +%d/%m/%Y`"
+	messagetrait="           Traitement du  $dateTrait  a  $heureTrait                      "
+	#-----------------------------------------------------------------------------------------------------------------
+	# repertoires des fichiers a mettre en quarantaine (REPAISOLER de general.ini)
+	#-----------------------------------------------------------------------------------------------------------------
+	# traitement des fichiers des repertoires a isoler
+	if [[ -n $repAisoler ]]
+	then
+		for repisol in $( echo "$repAisoler " | tr "," " ");
+		do
+			echo " --------------- Scrutation des fichiers de  $repisol a mettre en quarantaine -------------------"
+			
+			for edi in `li -l -Of /IMPMSA/$repisol/int/*afp|awk '{print $9}'|awk -F/ '{print  $NF}'` 
+			do
+				echo " Mise en Quarantaine des fichier $edi dans /IMPMSA/$repisol/int/quarantaine/" >> /var/pd/edition/dmonimp.log
+				mv /IMPMSA/$repisol/int/$edi /IMPMSA/$repisol/int/quarantaine/
+			done
+			
+			for edi in `li -l -Of /IMPMSA/$repisol/msp/*afp|awk '{print $9}'|awk -F/ '{print  $NF}'` 
+			do
+				echo " Mise en quarantaine des fichier $edi dans /IMPMSA/$repisol/msp/quarantaine/" >> /var/pd/edition/dmonimp.log
+				mv /IMPMSA/$repisol/msp/$edi /IMPMSA/$repisol/msp/quarantaine/
+			done
+			
+		done
+	fi
+
+	#----------------------------------------------------------------------------------------------
+	# repertoires des fichiers a traiter (REPASCRUTER de general.ini)
+	#----------------------------------------------------------------------------------------------
+
+	for repertoire in $( echo "$repAtraiter" | tr "," " ");
+	do
+		# echo " --------------- Scrutation Normale de $repertoire -------------------"
+		#----------------------------------------------------------------------------
+		# Determine les repertoires de travail pour MSP et 
+		# fichier .JS
+		# et le flag prod ou test selon le contexte
+		# Si prod --> /IMPMSA/$repertoire/afpprod
+		#		
+		# Si test  --> /IMPMSA/$repertoire/afptest
+		#
+		#----------------------------------------------------------------------------
+		
+		REPSOURCE=/IMPMSA/$repertoire
+		case $repertoire in
+			prod)print "Case prod" 
+				REPTRAV=$REPSOURCE/afpprod
+				# REPSCRUTSI= repertoire de scrutation par scrutateur xerox
+				REPSCRUTSI=/IMPMSA/afpprod
+				# REPMADISPOMSP= repertoire de depot du fichier pour PM sur le serveur epc610
+				REPMADISPOMSP=/pmdataV4/prod/travail
+				MO=P ;;
+			preprod)print "Case Test"
+				REPTRAV=$REPSOURCE/afptest
+				# REPSCRUTSI= repertoire de scrutation par scrutateur xerox
+				REPSCRUTSI=/IMPMSA/afptest
+				# REPMADISPOMSP= repertoire de depot du fichier pour PM sur le serveur devedi
+				REPMADISPOMSP=/pmdataV4/dev/travail
+				MO=T ;;
+			recette)print "Case Test"
+				REPTRAV=$REPSOURCE/afptest
+				# REPSCRUTSI= repertoire de scrutation par scrutateur xerox
+				REPSCRUTSI=/IMPMSA/afptest
+				# REPMADISPOMSP= repertoire de depot du fichier pour PM  sur le serveur devedi
+				REPMADISPOMSP=/pmdataV4/dev/travail
+				MO=T ;;	
+			integration)print "Case Test"
+				REPTRAV=$REPSOURCE/afptest
+				# REPSCRUTSI= repertoire de scrutation par scrutateur xerox
+				REPSCRUTSI=/IMPMSA/afptest
+				# REPMADISPOMSP= repertoire de depot du fichier pour PM  sur le serveur devedi
+				REPMADISPOMSP=/pmdataV4/dev/travail
+				MO=T ;;
+				
+			*) print "Autre"
+				echo "Dmonimp : Repertoire $REPTRAV inconnu" | mail yann.kloniecki@cpr.sncf.fr
+				exit ;;
+		esac
+		#repertoire de residence des editions hors MSP
+		TRAVINT=/IMPMSA/$repertoire/int
+		#repertoire de residence des editions destinees a la MSP
+		TRAVMSP=/IMPMSA/$repertoire/msp
+				
+		#---------------------------------------------------------------------------------
+		# Determine s'il existe des fichiers .AFP sous 
+		#  REPSCRUTSI/msp/int et msp dans le sas imprimante
+		# Si c'est le cas mise en attente du traitement
+		#---------------------------------------------------------------------------------
+		while true
+		do
+			ls -1 $REPSCRUTSI/int/$ImpPageApage/*.afp 
+			if [ $? = 0 ] 
+			then
+				print " --------- dmonimp(01): il existe des fichiers .AFP non traites dans $REPSCRUTSI/int/$ImpPageApage/ " >> /var/pd/edition/dmonimp.log
+			else
+				break
+			fi
+			print " --------- dmonimp(01): Mise en sommeil 60 s car .AFP dans  $REPSCRUTSI/int/$ImpPageApage/ " >> /var/pd/edition/dmonimp.log
+			sleep 60
+		done
+		while true
+		do
+			ls -1 $REPSCRUTSI/int/$ImpContinue/*.afp 
+			if [ $? = 0 ] 
+			then
+				print " --------- dmonimp(01): il existe des fichiers .AFP non traites dans $REPSCRUTSI/int/$ImpContinue/ " >> /var/pd/edition/dmonimp.log
+			else
+				break
+			fi
+			print " --------- dmonimp(01): Mise en sommeil 60 s car .AFP dans  $REPSCRUTSI/int/$ImpContinue/ " >> /var/pd/edition/dmonimp.log
+			sleep 60
+		done
+		while true
+		do
+			ls -1 $REPSCRUTSI/msp/$ImpPageApage/*.afp 
+			if [ $? = 0 ] 
+			then
+				print " --------- dmonimp(01): il existe des fichiers .AFP non traites dans $REPSCRUTSI/msp/$ImpPageApage/ " >> /var/pd/edition/dmonimp.log
+			else
+				break
+			fi
+			print " --------- dmonimp(01): Mise en sommeil 60 s car .AFP dans  $REPSCRUTSI/msp/$ImpPageApage/ " >> /var/pd/edition/dmonimp.log
+			sleep 60
+		done
+		while true
+		do
+			ls -1 $REPSCRUTSI/msp/$ImpContinue/*.afp 
+			if [ $? = 0 ] 
+			then
+				print " --------- dmonimp(01): il existe des fichiers .AFP non traites dans $REPSCRUTSI/msp/$ImpContinue/ " >> /var/pd/edition/dmonimp.log
+			else
+				break
+			fi
+			print " --------- dmonimp(01): Mise en sommeil 60 s car .AFP dans  $REPSCRUTSI/msp/$ImpContinue/ " >> /var/pd/edition/dmonimp.log
+			sleep 60
+		done
+				
+		#------------------------------------------------------------------------------------------------
+		# On vire les .IMP et les .JSIMP du repertoire $REPSCRUTSI/
+		# le renomage des fichiers en .IMP et .JSIMP est effectue
+		# par le prg  d:\mpm2vip\afph_cpr.exe du serveur VIP
+		#------------------------------------------------------------------------------------------------
+				
+		for file in  $REPSCRUTSI/int/$ImpContinue/*.IMP
+		do
+			if [[ -f $file ]]
+			then
+				print " --------- dmonimp(02): Recherche et suppression de .IMP dans  $REPSCRUTSI/int/$ImpContinue/" >> /var/pd/edition/dmonimp.log
+				print " --------- dmonimp(02): Suppression de $file .IMP dans  $REPSCRUTSI/int/$ImpContinue/" >> /var/pd/edition/dmonimp.log
+				rm $file
+			fi
+		done
+		for file in $REPSCRUTSI/int/$ImpPageApage/*.IMP
+		do
+			if [[ -f $file ]]
+			then
+				print " --------- dmonimp(02): Recherche et suppression de .IMP dans  $REPSCRUTSI/int/$ImpPageApage/" >> /var/pd/edition/dmonimp.log
+				print " --------- dmonimp(02): Suppression de $file .IMP dans  $REPSCRUTSI/int/$ImpPageApage/" >> /var/pd/edition/dmonimp.log
+				rm $file
+			fi
+		done
+		
+		for file in  $REPSCRUTSI/msp/$ImpContinue/*.IMP
+		do
+			if [[ -f $file ]]
+			then
+				print " --------- dmonimp(02): Recherche et suppression de .IMP dans  $REPSCRUTSI/msp/$ImpContinue/" >> /var/pd/edition/dmonimp.log
+				print " --------- dmonimp(02): Suppression de $file .IMP dans  $REPSCRUTSI/msp/$ImpContinue/" >> /var/pd/edition/dmonimp.log
+				rm $file
+			fi
+		done
+		for file in $REPSCRUTSI/msp/$ImpPageApage/*.IMP
+		do
+			if [[ -f $file ]]
+			then
+				print " --------- dmonimp(02): Recherche et suppression de .IMP dans  $REPSCRUTSI/msp/$ImpPageApage/" >> /var/pd/edition/dmonimp.log
+				print " --------- dmonimp(02): Suppression de $file .IMP dans  $REPSCRUTSI/msp/$ImpPageApage/" >> /var/pd/edition/dmonimp.log
+				rm $file
+			fi
+		done
+		
+		for file in  $REPSCRUTSI/int/$ImpContinue/*.JSIMP
+		do
+			if [[ -f $file ]]
+			then
+				print " --------- dmonimp(02): Recherche et suppression de .JSIMP dans  $REPSCRUTSI/int/$ImpContinue/" >> /var/pd/edition/dmonimp.log
+				print " --------- dmonimp(02): Suppression de $file .JSIMP dans  $REPSCRUTSI/int/$ImpContinue/" >> /var/pd/edition/dmonimp.log
+				rm $file
+			fi
+		done
+		for file in $REPSCRUTSI/int/$ImpPageApage/*.JSIMP
+		do
+			if [[ -f $file ]]
+			then
+				print " --------- dmonimp(02): Recherche et suppression de .JSIMP dans  $REPSCRUTSI/int/$ImpPageApage/" >> /var/pd/edition/dmonimp.log
+				print " --------- dmonimp(02): Suppression de $file .JSIMP dans  $REPSCRUTSI/int/$ImpPageApage/" >> /var/pd/edition/dmonimp.log
+				rm $file
+			fi
+		done
+		
+		for file in  $REPSCRUTSI/msp/$ImpContinue/*.JSIMP
+		do
+			if [[ -f $file ]]
+			then
+				print " --------- dmonimp(02): Recherche et suppression de .JSIMP dans  $REPSCRUTSI/msp/$ImpContinue/" >> /var/pd/edition/dmonimp.log
+				print " --------- dmonimp(02): Suppression de $file .JSIMP dans  $REPSCRUTSI/msp/$ImpContinue/" >> /var/pd/edition/dmonimp.log
+				rm $file
+			fi
+		done
+		for file in $REPSCRUTSI/msp/$ImpPageApage/*.JSIMP
+		do
+			if [[ -f $file ]]
+			then
+				print " --------- dmonimp(02): Recherche et suppression de .JSIMP dans  $REPSCRUTSI/msp/$ImpPageApage/" >> /var/pd/edition/dmonimp.log
+				print " --------- dmonimp(02): Suppression de $file .JSIMP dans  $REPSCRUTSI/msp/$ImpPageApage/" >> /var/pd/edition/dmonimp.log
+				rm $file
+			fi
+		done
+				
+		# echo "Repertoire $REPTRAV $REPSCRUTSI $TRAVMSP $TRAVINT $MO" >> /var/pd/edition/dmonimp.log
+		
+		#------------------------------------------------------------------------------------------------
+		# Editions internes
+		# Boucle sur le repertoire des fichiers recus de KSL en .afp
+		# sous $TRAVINT/* et traite chacun de ces fichiers
+		# ex: ediros.210332.k7i
+		#-------------------------------------------------------------------------------------------------
+				
+		for edi in `li -l -Of $TRAVINT/*afp|awk '{print $9}'|awk -F/ '{print  $NF}'` 
+		do
+			# echo $edi
+			#------------------------------------------------------------------------------------------------------------
+			# sauvegarde du fichier afp  dans $TRAVINT/save/  
+			#------------------------------------------------------------------------------------------------------------
+			echo $messagetrait  >> /var/pd/edition/dmonimp.log
+			print " --------------------------------------------------------------------------------------------------------------------------------------------------- " >> /var/pd/edition/dmonimp.log
+			print " --------- dmonimp(6): Sauvegarde de "$TRAVINT/$edi" dans "$TRAVINT/save/ >> /var/pd/edition/dmonimp.log
+			
+			cp $TRAVINT/titi $TRAVINT/save/titi
+			cp $TRAVINT/$edi $TRAVINT/save/$edi
+			#-----------------------------------------------------------------------------------------
+			# Renomme le fichier en majuscule et sans extension
+			# ex: EDIGRA.210332.afp en EDIGRA.210332
+			#-----------------------------------------------------------------------------------------
+			
+			sta=`echo $edi | cut -c24-26 | tr '[a-z]' '[A-Z]'`
+			NbPages=`echo $edi | awk -F"." '{print $3}' `
+			#echo $sta
+			
+			ed=`echo $edi | cut -c1-13 | tr '[a-z]' '[A-Z]'`".$NbPages.$sta"
+						
+			NEWNAME=`echo $ed | cut -c1-13`
+			jma=`date +%d +%m +%Y`
+			hms=`date +%H +%M +%S`
+			app=`echo $ed | awk -F"." '{print $1}'`
+			jj=`echo $ed | awk -F"." '{print $2}' | cut -c1-2 `
+			hh=`echo $ed | awk -F"." '{print $2}' | cut -c3-4 `
+			mn=`echo $ed | awk -F"." '{print $2}' | cut -c5-6 `
+			
+			NEWNAMEINT=`echo $edi | cut -c1-13 | tr '[a-z]' '[A-Z]'`".$NbPages"
+			#echo $app
+			#echo $NbPages
+			#echo $NEWNAMEINT
+			#exit
+			
+			print " --------- dmonimp(3): renomage de "$TRAVINT/$edi" en "$TRAVINT/$ed >> /var/pd/edition/dmonimp.log
+			mv $TRAVINT/$edi $TRAVINT/$NEWNAMEINT 2>/dev/null
+			
+			if [ $? = 0 ]
+			then
+							
+				#------------------------------------------------------------------------------------------------------------------
+				# le fichier a bien ete renome en majuscule et le travail peut commencer
+				#------------------------------------------------------------------------------------------------------------------
+				print " --------- dmonimp(31): $NEWNAMEINT  Nbre de pages: $NbPages --- debut de traitement ----------------------------- " >> /var/pd/edition/dmonimp.log
+				#------------------------------------------------------------------------------------
+				# Test si fichier $TRAVINT/$NEWNAMEINT non vide 
+				# ex: /IMPMSA/recette/int/EDIGRA.251948.000033
+				#--------------------------------------------------------------
+				if [ -s $TRAVINT/$NEWNAMEINT ]
+				then
+					print " --------- dmonimp(4): recherche du .INI correspondant a "$TRAVINT/$MO$NEWNAMEINT >> /var/pd/edition/dmonimp.log
+					#--------------------------------------------------------------------------------------------
+					# Creation du nom de l'etiquette dans le fichier config.ini
+					# par ex: [tEDIGRA]
+					#--------------------------------------------------------------------------------------------
+					papp=`echo $app | cut -c1-3`
+					case $papp in
+						EDI)  capp=$app  ;;
+						  *)  capp=$papp ;;
+					esac
+					
+					etiquetteIni=$MO$capp
+					
+					print " --------- Etiquette ini  "$etiquetteIni >> /var/pd/edition/dmonimp.log
+					
+					#--------------------------------------------------------------------------------------------
+					# On recherche la bonne etiquette dans le fichier de config
+					# sous /editique/bin/ini/config.ini et on charge les valeurs  dans
+					# les variables pour construire le .JS  (ex: [tEDIGRA]...[/tEDIGRA]
+					# ici on recupere le nom du parametre
+					#--------------------------------------------------------------------------------------------				
+					
+					Activation_Type=$(charge_variable_config $etiquetteIni "TYPE_EDITION")
+					
+					if [ $Activation_Type = ERREUR ]
+					then		
+						print " ---------  Sortie du programme..... Etiquette Non trouvee...." >> /var/pd/edition/dmonimp.log
+						#------------------------------------------------------------------------------------------------------------
+						# Copie du fichier afp  de $TRAVINT/save/   dans $TRAVINT/erreurs/
+						#------------------------------------------------------------------------------------------------------------
+						print " --------- dmonimp(6): Copie du fichier en erreur "$TRAVINT/save/$edi" dans "$TRAVINT/erreurs/ >> /var/pd/edition/dmonimp.log
+						cp $TRAVINT/save/$edi $TRAVINT/erreurs/$edi 
+						#------------------------------------------------------------------------------------------------------------
+						# Detruit le fichier afp du repertoire courant de travail $TRAVINT/$NEWNAME
+						#------------------------------------------------------------------------------------------------------------
+						print " --------- dmonimp(6): Destruction du fichier en erreur "$TRAVINT/$NEWNAMEINT >> /var/pd/edition/dmonimp.log
+						rm $TRAVINT/$NEWNAMEINT
+					else
+						print " --------- dmonimp(6): Etiquette correcte trouvee "$etiquetteIni " pour le type de traitement : " $Activation_Type >> /var/pd/edition/dmonimp.log	
+												
+						Activation_Info=$(charge_variable_config $etiquetteIni "INFO_EDITION")
+						Activation_SET=$(charge_variable_config $etiquetteIni "JS_SET")
+						Activation_FILE=$(charge_variable_config $etiquetteIni "JS_FILE")
+						Activation_OUTPUT=$(charge_variable_config $etiquetteIni "JS_OUTPUT")
+						Activation_SEPCOUNT=$(charge_variable_config $etiquetteIni "JS_SEPCOUNT")
+						Activation_FORM=$(charge_variable_config $etiquetteIni "JS_FORM")
+						Activation_USERCOLUMN1=$(charge_variable_config $etiquetteIni "JS_USERCOLUMN1")
+						Activation_USERCOLUMN2=$(charge_variable_config $etiquetteIni "JS_USERCOLUMN2")
+						Activation_FORMDEF=$(charge_variable_config $etiquetteIni "JS_FORMDEF")
+						Activation_PAGEDEF=$(charge_variable_config $etiquetteIni "JS_PAGEDEF")
+						Activation_PAGECONTROL=$(charge_variable_config $etiquetteIni "JS_PAGECONTROL")
+						Activation_QUEUE=$(charge_variable_config $etiquetteIni "JS_QUEUE")
+						
+						# echo $Activation_Type $Activation_Info $Activation_SET $Activation_TYPE 
+						#echo $Activation_Comment $Activation_FormDef $Activation_PageDef $Activation_Queue $Activation_Ressources
+						
+						
+						#
+						#	echo "Dmonimp : Application $NEWNAME absente ou multiple dans init" | mail admin
+						#	echo "capp="$capp"resultat INIVALIDE="$INIVALIDE"  NEWNAME="$NEWNAME >> $PILOTFP
+						#	echo "AFPH"$sta"00;$jma;$hms;$NEWNAME;$MO;Application inconnue dans .ini" >> $PILOTFP
+						#	EnvoiQMail "AFPH-$NEWNAME-inconnue dans .ini" "/dev/null" "afph1" 
+						#	exit 
+					fi
+				fi
+				
+				#---------------------------------------------------------------------------------------------------------
+				# Traitement du fichier (editions INTERNES)
+				# On se trouve normalement dans ...../int
+				#----------------------------------------------------------------------------------------------------------
+				if [ $Activation_Type = INT ]
+				then				
+					echo "--------- dmonimp(16): Soumission  du fichier hors Process Manager vers VIP "$MO$NEWNAMEINT >>  /var/pd/edition/dmonimp.log
+					
+					#---------------------------------------------------------------------------------------------------------
+					#recupere le nom du fichier AFP (//)
+					#---------------------------------------------------------------------------------------------------------
+					#fic=`echo $ed |awk -F"//" '{print $2}'|awk -F@ '{print $1}'|sed 's/@/ /g'`
+					fic=$NEWNAMEINT
+					
+					cd $TRAVINT
+													
+					# ici il faut recuperer toutes les infos pour PILOT en simulant le pdpr par l'aboutissement ou non
+					# de la copie de fichier.
+						
+					#Creation du .js pour AFPH direct
+					DATELOG=`date +%d/%m/%Y`
+					HEURELOG=`date +%H:%M:%S`
+					#-------------------------------------------------------------------------
+					# construit le .JS en ignorant les variables du fichier
+					#config.ini non renseignees.
+					# pour invalider une option dans le JS, il suffit de 
+					# positionner le nom de variable a blanc du fichier
+					# /editique/bin/ini/config.ini
+					#
+					# La variable JS VIP_NAME="NAME=" doit etre 
+					# renseignee dans le JS correspondant par 
+					# proc-transfert puisqu'on ne connait pas le nom du
+					# produit MAG ici.
+					# (4M100.....) le nom du .JS doit etre modifie par
+					# proc-transfert. Ex: EDIGRA.210332.js en 4M10....sous 
+					# /IMPMSA/ftpprod/ ou /IMPMSA/ftptest/ si  variable 
+					# contexte -c M pour MSA et
+					#/IMPCPR/ftpprod/ ou /IMPCPR/ftptest/ si  variable 
+					# contexte -c C pour CPR 
+					#-------------------------------------------------------------------------
+												
+					if [[ -n $Activation_SET ]]
+					then
+						print $VIP_SET$Activation_SET > $fic.js
+					fi
+					if [[ -n $Activation_TYPE ]]
+					then
+						print $VIP_TYPE$Activation_TYPE >> $fic.js
+					fi
+					
+					if [[ -n $Activation_FILE ]]
+					then
+				       	print $VIP_FILE$Activation_FILE  >> $fic.js 
+				       fi
+				       
+				       if [[ -n $Activation_OUTPUT ]]
+					then
+				       	print $VIP_OUTPUT$Activation_OUTPUT  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_SEPCOUNT ]]
+					then
+				       	print $VIP_SEPCOUNT$Activation_SEPCOUNT  >> $fic.js 
+				       fi
+				       			       
+					if [[ -n $Activation_FORM ]]
+					then
+				       	print $VIP_FORM$Activation_FORM  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_USERCOLUMN1 ]]
+					then
+				       	print $VIP_USERCOLUMN1$Activation_USERCOLUMN1  >> $fic.js 
+				       fi
+					if [[ -n $Activation_USERCOLUMN2 ]]
+					then
+				       	print $VIP_USERCOLUMN2$Activation_USERCOLUMN2  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_FORMDEF ]]
+					then
+				       	print $VIP_FORMDEF$Activation_FORMDEF  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_PAGEDEF ]]
+					then
+				       	print $VIP_PAGEDEF$Activation_PAGEDEF  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_PAGECONTROL ]]
+					then
+				       	print $VIP_PAGECONTROL$Activation_PAGECONTROL  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_QUEUE ]]
+					then
+				       	print $VIP_QUEUE$Activation_QUEUE  >> $fic.js 
+				       fi
+				       
+					if [[ -n $NbPages ]]
+					then
+				    		print $VIP_PAGECOUNT$NbPages  >> $fic.js
+				    	fi
+				    	
+				    	print $VIP_NAME$MO$fic.AFP  >> $fic.js
+				    	
+				    	chmod 777 $fic.js
+				    	
+				       #print $DATELOG >> $fic.js
+				       #print $HEURELOG >> $fic.js | chmod 777 $fic.js
+				      
+				       #------------------------------------------------------------------------------------
+				       # transfert des fichiers dans les répertoires scrutes par VIP
+				       # dans /IMPMSA/afpprod/int (datum afp + .JS)
+				       #-------------------------------------------------------------------------------------
+				       echo "--------- dmonimp(162): Soumission  du fichier hors Process Manager pour VIP dans "$REPSCRUTSI/int/$ImpPageApage/$MO$NEWNAMEINT.$sta >>  /var/pd/edition/dmonimp.log
+				       mv $TRAVINT/$NEWNAMEINT $REPSCRUTSI/int/$ImpPageApage/$MO$NEWNAMEINT.$sta
+				       echo "--------- dmonimp(163): Soumission  du fichier hors Process Manager pour VIP dans "$REPSCRUTSI/int/$ImpPageApage/$MO$fic.js >>  /var/pd/edition/dmonimp.log
+				       mv $fic.js $REPSCRUTSI/int/$ImpPageApage/$MO$fic.AFP.js
+					
+					#echo "Envoi traitement hors Process Manager en prod "$fic >> $TRACE/$NEWNAME.log
+					# Transfert vers VIP est realise 
+					# emule la reussite de la commande PDPR modi suite à install de VIP 
+					# controle si dans $com on a ERREUR ATTENDRE FEU VERT
+					#echo "PDPR001;$jma;$hms;$fic;$MO;$destl;$com;$pag" >> $PILOT
+					#echo "pdpr -p"$des" -x '"$comt" page-count="$pag"' "$fic >> $TRACE/$NEWNAME.log
+					#rm $TRACE/tmp.pdpr
+									
+					echo "--------- dmonimp(165): Creation et mise a disposition des .JS pour VIP sous $REPSCRUTSI/int/$ImpPageApage" >>  /var/pd/edition/dmonimp.log
+					print " --------------------------------------------------------------------------------------------------------------------------------------------------- " >> /var/pd/edition/dmonimp.log	             			
+				fi
+				
+				#---------------------------------------------------------------------------------------------------------
+				# Possibilite de passer une edition interne en MSP
+				# on se trouve normalement dans ..../int et on devie le fichier vers
+				# la mise sous pli
+				# Traitement des fichiers qui passent par Process Manager 
+				#----------------------------------------------------------------------------------------------------------
+				if [ $Activation_Type = MSP ]
+				then				
+					echo "--------- dmonimp(16): Redirection du fichier Interne vers Process Manager vers VIP "$NEWNAME >>  /var/pd/edition/dmonimp.log
+								
+					#---------------------------------------------------------------------------------------------------------
+					#recupere le nom du fichier AFP (//)
+					#---------------------------------------------------------------------------------------------------------
+					
+					fic=$NEWNAME
+					cd $TRAVMSP
+												
+					# ici il faut recuperer toutes les infos pour PILOT en simulant le pdpr par l'aboutissement ou non						# de la copie de fichier.
+					#pdpr -p$des -x "$comt page-count=$pag" $fic 2> $TRACE/tmp.pdpr
+					#Creation du .js pour AFPH direct
+					DATELOG=`date +%d/%m/%Y`
+					HEURELOG=`date +%H:%M:%S`
+					#-------------------------------------------------------------------------
+					# construit le .JS en ignorant les variables du fichier
+					#config.ini non renseignees.
+					# pour invalider une option dans le JS, il suffit de 
+					# positionner le nom de variable a blanc du fichier
+					# /editique/bin/ini/config.ini
+					#
+					# La variable JS VIP_NAME="NAME=" doit etre 
+					# renseignee dans le JS correspondant par 
+					# proc-transfert puisqu'on ne connait pas le nom du
+					# produit MAG ici.
+					# (4M100.....) le nom du .JS doit etre modifie par
+					# proc-transfert. Ex: EDIGRA.210332.js en 4M10....sous 
+					# /IMPMSA/ftpprod/ ou /IMPMSA/ftptest/ si  variable 
+					# contexte -c M pour MSA et
+					#/IMPCPR/ftpprod/ ou /IMPCPR/ftptest/ si  variable 
+					# contexte -c C pour CPR 
+					#-------------------------------------------------------------------------
+					if [[ -n $Activation_SET ]]
+					then
+						print $VIP_SET$Activation_SET > $fic.js
+					fi
+					if [[ -n $Activation_TYPE ]]
+					then
+						print $VIP_TYPE$Activation_TYPE >> $fic.js
+					fi
+					
+					if [[ -n $Activation_FILE ]]
+					then
+				       	print $VIP_FILE$Activation_FILE  >> $fic.js 
+				       fi
+				       
+				       if [[ -n $Activation_OUTPUT ]]
+					then
+				       	print $VIP_OUTPUT$Activation_OUTPUT  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_SEPCOUNT ]]
+					then
+				       	print $VIP_SEPCOUNT$Activation_SEPCOUNT  >> $fic.js 
+				       fi
+				       			       
+					if [[ -n $Activation_FORM ]]
+					then
+				       	print $VIP_FORM$Activation_FORM  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_USERCOLUMN1 ]]
+					then
+				       	print $VIP_USERCOLUMN1$Activation_USERCOLUMN1  >> $fic.js 
+				       fi
+					if [[ -n $Activation_USERCOLUMN2 ]]
+					then
+				       	print $VIP_USERCOLUMN2$Activation_USERCOLUMN2  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_FORMDEF ]]
+					then
+				       	print $VIP_FORMDEF$Activation_FORMDEF  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_PAGEDEF ]]
+					then
+				       	print $VIP_PAGEDEF$Activation_PAGEDEF  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_PAGECONTROL ]]
+					then
+				       	print $VIP_PAGECONTROL$Activation_PAGECONTROL  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_QUEUE ]]
+					then
+				       	print $VIP_QUEUE$Activation_QUEUE  >> $fic.js 
+				       fi
+				       
+					if [[ -n $NbPages ]]
+					then
+				    		print $VIP_PAGECOUNT$NbPages  >> $fic.js
+				    	fi
+				       
+									    	
+				    	chmod 777 $fic.js
+				    	
+				       #print $DATELOG >> $fic.js
+				       #print $HEURELOG >> $fic.js | chmod 777 $fic.js
+				      
+				      #------------------------------------------------------------------------------------
+				      # transfert du fichier Datum dans le repertoire scrute par MSP
+				      # 
+				      # 
+				      #-------------------------------------------------------------------------------------
+				      ficenvoi=$NEWNAME.000.$NbPages.AFP
+				      mv $TRAVMSP/$NEWNAME $REPMADISPOMSP/$ficenvoi
+				      #------------------------------------------------------------------------------------
+				      # transfert du fichier JS dans le repertoire /msp/jswait. 
+				      # Ce fichier sera modifie et renome et mouve par 
+				      # proc-transfert dans /msp scrute par VIP
+				      # 
+				      #-------------------------------------------------------------------------------------
+				      mv $fic.js $REPSCRUTSI/msp/jswait
+				      	
+				      #------------------------------------------------
+				      # cas des fichiers test alors 
+				      # éxecution environnement de test
+				      #------------------------------------------------
+				     if [ $MO = T ]
+				     then
+				     		ENVPATH=pmDev
+						#echo "rsh vers epc610 en test "$NEWNAME >> $TRACE/$NEWNAME.log
+						echo "--------- dmonimp(151): envoi via rsh du fichier de test vers Process Manager "$NEWNAME >>  /var/pd/edition/dmonimp.log
+						echo "--------- dmonimp(152): Passe la main au shell TgoPM.sh de Process Manager" >>  /var/pd/edition/dmonimp.log
+						while true 
+						do
+							ls -1 /pmenvV4/pmDev/pmDev/lock.yann
+							if [ $? = 0 ] 
+							then
+								echo "--------- dmonimp(152): Attente de liberation du fichier lock.yann pour  goXerox.sh de Process Manager" >>  /var/pd/edition/dmonimp.log
+								sleep 10
+							else
+								break
+							fi
+						done		
+						
+						# ICI il faut passer une nouveau parametres au TgoPM.sh, par exemple - c pour contexte (CPR ou MSA)
+						# puis modifier le dmonimp, le dmon et le goXerox.sh pour lui dire où trouver le fichier datum.
+						export PD_LANG=en_US		
+						rsh devedi -l mpm "export FILIEREPM=OMR;export MPMPATH=/pmenvV4;/pmenvV4/$ENVPATH/pmDev/TgoPM.sh -r /pmdataV4/travail -e T -c M"
+						
+						#export FILIEREPM=OMR
+						#export MPMPATH=/pmenvV4
+						#/pmenvV4/$ENVPATH/pmDev/TgoPM.sh -r /pmdataV4/travail -e T -c M
+						
+						echo "--------- dmonimp(153): Retour du shell TgoPM.sh de Process Manager vers dmonimp" >>  /var/pd/edition/dmonimp.log
+						
+				     fi
+								
+				     if [ $MO = P]
+				     then
+					      	ENVPATH=pmProd
+					      	#echo "rsh vers epc610 en prod "$fic >> $TRACE/$NEWNAME.log
+						echo "--------- dmonimp(154): envoi via rsh du fichier de prod vers Process Manager "$NEWNAME >>  /var/pd/edition/dmonimp.log
+						echo "--------- dmonimp(155): Passe la main au shell PgoPM. de Process Manager" >>  /var/pd/edition/dmonimp.log
+						while true 
+						do
+							ls -1 /pmenvV4/pmProd/pmProd/lock.yann
+							if [ $? = 0 ] 
+							then
+								echo "--------- dmonimp(152): Attente de liberation du fichier lock.yann pour  goXerox.sh de Process Manager" >>  /var/pd/edition/dmonimp.log
+								sleep 10
+							else
+								break
+							fi
+						done	
+								
+						# ICI il faut passer une nouveau parametres au TgoPM.sh, par exemple - c pour contexte (CPR ou MSA)
+						# puis modifier le dmonimp, le dmon et le PgoPM.sh pour lui dire où trouver le fichier datum.
+						export PD_LANG=en_US			
+						rsh editique -l mpm "export MPMPATH=/pmenvV4;/pmenvV4/$ENVPATH/pmProd/PgoPM.sh -r /pmdataV4/travail -e P -c M"
+						echo "--------- dmonimp(156): Retour du shell PgoPM.sh de Process Manager vers dmonimp" >>  /var/pd/edition/dmonimp.log
+					 fi
+					 # Transfert vers MPM est realise 
+					             			
+					 #echo "Envoi traitement hors Process Manager en prod "$fic >> $TRACE/$NEWNAME.log
+					 # Transfert vers VIP est realise 
+					 # emule la reussite de la commande PDPR modif suite a install de VIP 
+					 # controle si dans $com on a ERREUR ATTENDRE FEU VERT
+					 #echo "PDPR001;$jma;$hms;$fic;$MO;$destl;$com;$pag" >> $PILOT
+					 #echo "pdpr -p"$des" -x '"$comt" page-count="$pag"' "$fic >> $TRACE/$NEWNAME.log
+					 #rm $TRACE/tmp.pdpr
+										
+					 echo "--------- dmonimp(165): Creation et mise a disposition des .JS pour VIP sous "$REPSCRUTSI >>  /var/pd/edition/dmonimp.log
+				fi
+				
+				if [ $Activation_Type = ERREUR ]
+				then		
+					print " --------- Etiquette "$etiquetteIni "INEXISTANTE dans /editique/bin/ini/config.ini pour ce produit...." >> /var/pd/edition/dmonimp.log 
+				fi	
+				print " --------------------------------------------------------------------------------------------------------------------------------------------------- " >> /var/pd/edition/dmonimp.log	             											
+			fi
+		done
+		
+		#------------------------------------------------------------------------------------------------
+		# Editions externes (MSP)
+		# Boucle sur le repertoire des fichiers reçus de KSL en .afp
+		# sous $TRAVMSP/* et traite chacun de ces fichiers
+		# 
+		#-------------------------------------------------------------------------------------------------
+			
+		for edi in `li -l -Of $TRAVMSP/*afp*|awk '{print $9}'|awk -F/ '{print  $NF}'` 
+		do
+			echo $messagetrait  >> /var/pd/edition/dmonimp.log
+			print " --------------------------------------------------------------------------------------------------------------------------------------------------- " >> /var/pd/edition/dmonimp.log	             			
+			# echo $edi
+			#------------------------------------------------------------------------------------------------------------
+			# sauvegarde du fichier afp  dans $TRAVMSP/save/  
+			#------------------------------------------------------------------------------------------------------------
+			print " --------- dmonimp(6): Sauvegarde de "$TRAVMSP/$edi" dans "$TRAVMSP/save/ >> /var/pd/edition/dmonimp.log
+			cp $TRAVMSP/$edi $TRAVMSP/save/$edi
+			#-----------------------------------------------------------------------------------------
+			# Renomme le fichier en majuscule et sans extension
+			# ex: EDIGRA.25194829.0444356.afp en EDIGRA.251948
+			#-----------------------------------------------------------------------------------------
+		
+			sta=`echo $edi | cut -c24-26 | tr '[a-z]' '[A-Z]'`
+			NbPages=`echo $edi | awk -F"." '{print $3}' `
+			#echo $sta
+						
+			ed=`echo $edi | cut -c1-13 | tr '[a-z]' '[A-Z]'`".$sta"
+					
+			NEWNAME=`echo $ed | cut -c1-13`
+			
+			NEWNAMEINT=`echo $edi | cut -c1-13 | tr '[a-z]' '[A-Z]'`".$NbPages"
+			
+			jma=`date +%d +%m +%Y`
+			hms=`date +%H +%M +%S`
+			app=`echo $ed | awk -F"." '{print $1}'`
+			jj=`echo $ed | awk -F"." '{print $2}' | cut -c1-2 `
+			hh=`echo $ed | awk -F"." '{print $2}' | cut -c3-4 `
+			mn=`echo $ed | awk -F"." '{print $2}' | cut -c5-6 `
+			
+			#echo $app
+			#echo $NbPages
+			#echo $NEWNAME
+			#exit
+			
+			print " --------- dmonimp(3): renomage de "$TRAVMSP/$edi" en "$TRAVMSP/$ed >> /var/pd/edition/dmonimp.log
+			mv $TRAVMSP/$edi $TRAVMSP/$NEWNAME 2>/dev/null
+			
+			if [ $? = 0 ]
+			then
+							
+				#------------------------------------------------------------------------------------------------------------------
+				# le fichier a bien ete renome en majuscule et le travail peut commencer
+				#------------------------------------------------------------------------------------------------------------------
+				print " --------- dmonimp(31): $NEWNAMEINT  Nbre de pages: $NbPages --- debut de traitement ----------------------------- " >> /var/pd/edition/dmonimp.log
+				
+				#------------------------------------------------------------------------------------
+				# Test si fichier $TRAVMSP/$NEWNAME non vide 
+				# ex: /IMPMSA/recette/msp/EDIGRA.251948
+				#--------------------------------------------------------------
+				if [ -s $TRAVMSP/$NEWNAME ]
+				then
+					print " --------- dmonimp(4): recherche du .INI correspondant a "$TRAVMSP/$NEWNAME >> /var/pd/edition/dmonimp.log
+					#--------------------------------------------------------------------------------------------
+					# On recherche la bonne etiquette dans le fichier de config
+					# sous /editique/bin/ini/config.ini et on charge les valeurs  dans
+					# les variables pour construire le .JS  (ex: [tEDIGRA]...[/tEDIGRA]
+					#--------------------------------------------------------------------------------------------
+					
+					papp=`echo $app | cut -c1-3`
+					case $papp in
+						EDI)  capp=$app  ;;
+						  *)  capp=$papp ;;
+					esac
+					#--------------------------------------------------------------------------------------------
+					# On recherche la bonne etiquette dans le fichier de config
+					# sous /editique/bin/ini/config.ini
+					#--------------------------------------------------------------------------------------------
+					
+					etiquetteIni=$MO$capp
+					print " --------- Etiquette ini: "$etiquetteIni >> /var/pd/edition/dmonimp.log
+					
+					Activation_Type=$(charge_variable_config $etiquetteIni "TYPE_EDITION")
+					if [ $Activation_Type = ERREUR ]
+					then		
+						print " ---------  Sortie du programme..... Etiquette Non trouvee...." >> /var/pd/edition/dmonimp.log
+						#------------------------------------------------------------------------------------------------------------
+						# Copie du fichier afp  de $TRAVMSP/save/   dans $TRAVMSP/erreurs/
+						#------------------------------------------------------------------------------------------------------------
+						print " --------- dmonimp(6): Copie du fichier en erreur "$TRAVMSP/save/$edi" dans "$TRAVMSP/erreurs/ >> /var/pd/edition/dmonimp.log
+						cp $TRAVMSP/save/$edi $TRAVMSP/erreurs/$edi 
+						#------------------------------------------------------------------------------------------------------------
+						# Detruit le fichier afp du repertoire courant de travail $TRAVMSP/$NEWNAME
+						#------------------------------------------------------------------------------------------------------------
+						print " --------- dmonimp(6): Destruction du fichier en erreur "$TRAVMSP/$NEWNAME  >> /var/pd/edition/dmonimp.log
+						rm $TRAVMSP/$NEWNAME
+					else
+						print " --------- dmonimp(6): Etiquette correcte trouvee "$etiquetteIni " pour le type de traitement : " $Activation_Type >> /var/pd/edition/dmonimp.log
+						Activation_Info=$(charge_variable_config $etiquetteIni "INFO_EDITION")
+						Activation_SET=$(charge_variable_config $etiquetteIni "JS_SET")
+						Activation_FILE=$(charge_variable_config $etiquetteIni "JS_FILE")
+						Activation_OUTPUT=$(charge_variable_config $etiquetteIni "JS_OUTPUT")
+						Activation_SEPCOUNT=$(charge_variable_config $etiquetteIni "JS_SEPCOUNT")
+						Activation_FORM=$(charge_variable_config $etiquetteIni "JS_FORM")
+						Activation_USERCOLUMN1=$(charge_variable_config $etiquetteIni "JS_USERCOLUMN1")
+						Activation_USERCOLUMN2=$(charge_variable_config $etiquetteIni "JS_USERCOLUMN2")
+						Activation_FORMDEF=$(charge_variable_config $etiquetteIni "JS_FORMDEF")
+						Activation_PAGEDEF=$(charge_variable_config $etiquetteIni "JS_PAGEDEF")
+						Activation_PAGECONTROL=$(charge_variable_config $etiquetteIni "JS_PAGECONTROL")
+						Activation_QUEUE=$(charge_variable_config $etiquetteIni "JS_QUEUE")
+						
+						#print "$Activation_Type $Activation_Info $Activation_SET $Activation_TYPE"  >> /var/pd/edition/dmonimp.log
+						#echo $Activation_Type $Activation_Info $Activation_Imprimante $Activation_Destination 
+						#echo $Activation_Comment $Activation_FormDef $Activation_PageDef $Activation_Queue $Activation_Ressources
+						
+						#
+						#	echo "Dmonimp : Application $NEWNAME absente ou multiple dans init" | mail admin
+						#	echo "capp="$capp"resultat INIVALIDE="$INIVALIDE"  NEWNAME="$NEWNAME >> $PILOTFP
+						#	echo "AFPH"$sta"00;$jma;$hms;$NEWNAME;$MO;Application inconnue dans .ini" >> $PILOTFP
+						#	EnvoiQMail "AFPH-$NEWNAME-inconnue dans .ini" "/dev/null" "afph1" 
+						#	exit 
+					fi
+				fi
+				
+				#---------------------------------------------------------------------------------------------------------
+				# Traitement des fichiers qui passent par Process Manager 
+				#----------------------------------------------------------------------------------------------------------
+				if [ $Activation_Type = MSP ]
+				then				
+					echo "--------- dmonimp(16): Redirection  du fichier Interne vers Process Manager vers VIP "$NEWNAME >>  /var/pd/edition/dmonimp.log
+					
+					#---------------------------------------------------------------------------------------------------------
+					#recupere le nom du fichier AFP (//)
+					#---------------------------------------------------------------------------------------------------------
+					
+					fic=$NEWNAME
+					cd $TRAVMSP
+					#ici il faut recuperer toutes les infos pour PILOT en simulant le pdpr par l'aboutissement ou non
+					# de la copie de fichier.
+					#pdpr -p$des -x "$comt page-count=$pag" $fic 2> $TRACE/tmp.pdpr
+					#Creation du .js pour AFPH direct
+					DATELOG=`date +%d/%m/%Y`
+					HEURELOG=`date +%H:%M:%S`
+					#-------------------------------------------------------------------------
+					# construit le .JS en ignorant les variables du fichier
+					#config.ini non renseignees.
+					# pour invalider une option dans le JS, il suffit de 
+					# positionner le nom de variable a blanc du fichier
+					# /editique/bin/ini/config.ini
+					#
+					# La variable JS VIP_NAME="NAME=" doit etre 
+					# renseignee dans le JS correspondant par 
+					# proc-transfert puisqu'on ne connait pas le nom du
+					# produit MAG ici.
+					# (4M100.....) le nom du .JS doit etre modifie par
+					# proc-transfert. Ex: EDIGRA.210332.js en 4M10....sous 
+					# /IMPMSA/ftpprod/ ou /IMPMSA/ftptest/ si  variable 
+					# contexte -c M pour MSA et
+					#/IMPCPR/ftpprod/ ou /IMPCPR/ftptest/ si  variable 
+					# contexte -c C pour CPR 
+					#-------------------------------------------------------------------------
+					if [[ -n $Activation_SET ]]
+					then
+						print $VIP_SET$Activation_SET > $fic.js
+					fi
+					if [[ -n $Activation_TYPE ]]
+					then
+						print $VIP_TYPE$Activation_TYPE >> $fic.js
+					fi
+					
+					if [[ -n $Activation_FILE ]]
+					then
+				       	print $VIP_FILE$Activation_FILE  >> $fic.js 
+				       fi
+				       
+				       if [[ -n $Activation_OUTPUT ]]
+					then
+				       	print $VIP_OUTPUT$Activation_OUTPUT  >> $fic.js 
+				       fi
+				       
+				       if [[ -n $Activation_SEPCOUNT ]]
+					then
+				       	print $VIP_SEPCOUNT$Activation_SEPCOUNT  >> $fic.js 
+				       fi
+				       			       
+					if [[ -n $Activation_FORM ]]
+					then
+				       	print $VIP_FORM$Activation_FORM  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_USERCOLUMN1 ]]
+					then
+				       	print $VIP_USERCOLUMN1$Activation_USERCOLUMN1  >> $fic.js 
+				       fi
+					if [[ -n $Activation_USERCOLUMN2 ]]
+					then
+				       	print $VIP_USERCOLUMN2$Activation_USERCOLUMN2  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_FORMDEF ]]
+					then
+				       	print $VIP_FORMDEF$Activation_FORMDEF  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_PAGEDEF ]]
+					then
+				       	print $VIP_PAGEDEF$Activation_PAGEDEF  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_PAGECONTROL ]]
+					then
+				       	print $VIP_PAGECONTROL$Activation_PAGECONTROL  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_QUEUE ]]
+					then
+				       	print $VIP_QUEUE$Activation_QUEUE  >> $fic.js 
+				       fi
+				       
+					if [[ -n $NbPages ]]
+					then
+				    		print $VIP_PAGECOUNT$NbPages  >> $fic.js
+				    	fi
+					    	
+					chmod 777 $fic.js
+					
+					#print $DATELOG >> $fic.js
+					#print $HEURELOG >> $fic.js | chmod 777 $fic.js
+					      
+					#------------------------------------------------------------------------------------
+					# transfert du fichier Datum dans le repertoire scrute par MSP
+					# 
+					# 
+					#-------------------------------------------------------------------------------------
+					ficenvoi=$NEWNAME.000.$NbPages.AFP
+				      	mv $TRAVMSP/$NEWNAME $REPMADISPOMSP/$ficenvoi
+					#------------------------------------------------------------------------------------
+					# transfert du fichier JS dans le repertoire scrute par 
+					# proc-transfert qui enrichiera renomera et mouvera vers
+					# le répertoire scrute par VIP.
+					#-------------------------------------------------------------------------------------
+					mv $fic.js $REPSCRUTSI/msp/jswait
+					      	
+					#------------------------------------------------
+					# cas des fichiers test alors 
+					# Execution environnement de test
+					#------------------------------------------------
+					if [ $MO = T ]
+					then
+						ENVPATH=pmDev
+						#echo "rsh vers epc610 en test "$NEWNAME >> $TRACE/$NEWNAME.log
+						echo "--------- dmonimp(151): envoi via rsh du fichier de test vers Process Manager "$NEWNAME >>  /var/pd/edition/dmonimp.log
+						echo "--------- dmonimp(152): Passe la main au shell TgoPM.sh de Process Manager" >>  /var/pd/edition/dmonimp.log
+						while true 
+						do
+							ls -1 /pmenvV4/pmDev/pmDev/lock.yann
+							if [ $? = 0 ] 
+							then
+								echo "--------- dmonimp(152): Attente de liberation du fichier lock.yann pour  goXerox.sh de Process Manager" >>  /var/pd/edition/dmonimp.log
+								sleep 10
+							else
+								break
+							fi
+						done		
+								
+						# ICI il faut passer une nouveau parametres au TgoPM.sh, par exemple - c pour contexte (CPR ou MSA)
+						# puis modifier le dmonimp, le dmon et le TgoPM.sh pour lui dire ou trouver le fichier datum.
+						export PD_LANG=en_US		
+						rsh devedi -l mpm "export FILIEREPM=OMR;export MPMPATH=/pmenvV4;/pmenvV4/$ENVPATH/pmDev/TgoPM.sh -r /pmdataV4/travail -e T -c M"
+						
+						#export FILIEREPM=OMR
+						#export MPMPATH=/pmenvV4
+						#/pmenvV4/$ENVPATH/pmDev/TgoPM.sh -r /pmdataV4/travail -e T -c M
+						
+						
+						echo "--------- dmonimp(153): Retour du shell TgoPM.sh de Process Manager vers dmonimp" >>  /var/pd/edition/dmonimp.log
+									
+					fi
+								
+					if [ $MO = P ]
+					then
+						ENVPATH=pmProd
+						#echo "rsh vers editique en prod "$fic >> $TRACE/$NEWNAME.log
+						echo "--------- dmonimp(154): envoi via rsh du fichier de prod vers Process Manager "$NEWNAME >>  /var/pd/edition/dmonimp.log
+						echo "--------- dmonimp(155): Passe la main au shell PgoPM. de Process Manager" >>  /var/pd/edition/dmonimp.log
+						while true 
+						do
+							ls -1 /pmenvV4/pmProd/pmProd/lock.yann
+							if [ $? = 0 ] 
+							then
+								echo "--------- dmonimp(152): Attente de liberation du fichier lock.yann pour  goXerox.sh de Process Manager" >>  /var/pd/edition/dmonimp.log
+								sleep 10
+							else
+								break
+							fi
+						done	
+							
+						# ICI il faut passer une nouveau parametres au PgoPM.sh, par exemple - c pour contexte (CPR ou MSA)
+						# puis modifier le dmonimp, le dmon et le PgoPM.sh pour lui dire où trouver le fichier datum.
+						export PD_LANG=en_US		
+						rsh editique -l mpm "export MPMPATH=/pmenvV4;/pmenvV4/$ENVPATH/pmProd/PgoPM.sh -r /pmdataV4/travail -e P -c M"
+						echo "--------- dmonimp(156): Retour du shell PgoPM.sh de Process Manager vers dmonimp" >>  /var/pd/edition/dmonimp.log
+					fi
+					# Transfert vers MPM est realise 
+					             			
+					#echo "Envoi traitement hors Process Manager en prod "$fic >> $TRACE/$NEWNAME.log
+					# Transfert vers VIP est realise 
+					# emule la reussite de la commande PDPR modif suite a install de VIP 
+					# controle si dans $com on a ERREUR ATTENDRE FEU VERT
+					#echo "PDPR001;$jma;$hms;$fic;$MO;$destl;$com;$pag" >> $PILOT
+					#echo "pdpr -p"$des" -x '"$comt" page-count="$pag"' "$fic >> $TRACE/$NEWNAME.log
+					#rm $TRACE/tmp.pdpr
+									
+					echo "--------- dmonimp(165): Creation et mise a disposition des .JS pour VIP sous "$REPSCRUTSI >>  /var/pd/edition/dmonimp.log
+
+				fi
+				
+				#---------------------------------------------------------------------------------------------------------
+				# Traitement du fichier (editions INTERNES)
+				#----------------------------------------------------------------------------------------------------------
+				if [ $Activation_Type = INT ]
+				then				
+					echo "--------- dmonimp(16): Soumission  du fichier hors Process Manager vers VIP : "$MO$NEWNAMEINT >>  /var/pd/edition/dmonimp.log
+					
+					#---------------------------------------------------------------------------------------------------------
+					#recupere le nom du fichier AFP (//)
+					#---------------------------------------------------------------------------------------------------------
+					fic=$NEWNAMEINT
+					#cd $TRAVINT
+												
+					# ici il faut recuperer toutes les infos pour PILOT en simulant le pdpr par l'aboutissement ou non
+					# de la copie de fichier.
+						
+					#Creation du .js pour AFPH direct
+					DATELOG=`date +%d/%m/%Y`
+					HEURELOG=`date +%H:%M:%S`
+					#-------------------------------------------------------------------------
+					# construit le .JS en ignorant les variables du fichier
+					#config.ini non renseignees.
+					# pour invalider une option dans le JS, il suffit de 
+					# positionner le nom de variable a blanc du fichier
+					# /editique/bin/ini/config.ini
+					#
+					# La variable JS VIP_NAME="NAME=" doit etre 
+					# renseignee dans le JS correspondant par 
+					# proc-transfert puisqu'on ne connait pas le nom du
+					# produit MAG ici.
+					# (4M100.....) le nom du .JS doit etre modifie par
+					# proc-transfert. Ex: EDIGRA.210332.js en 4M10....sous 
+					# /IMPMSA/ftpprod/ ou /IMPMSA/ftptest/ si  variable 
+					# contexte -c M pour MSA et
+					#/IMPCPR/ftpprod/ ou /IMPCPR/ftptest/ si  variable 
+					# contexte -c C pour CPR 
+					#-------------------------------------------------------------------------
+						
+					if [[ -n $Activation_SET ]]
+					then
+						print $VIP_SET$Activation_SET > $fic.js
+					fi
+					if [[ -n $Activation_TYPE ]]
+					then
+						print $VIP_TYPE$Activation_TYPE >> $fic.js
+					fi
+					
+					if [[ -n $Activation_FILE ]]
+					then
+				       	print $VIP_FILE$Activation_FILE  >> $fic.js 
+				       fi
+				       
+				       if [[ -n $Activation_OUTPUT ]]
+					then
+				       	print $VIP_OUTPUT$Activation_OUTPUT  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_SEPCOUNT ]]
+					then
+				       	print $VIP_SEPCOUNT$Activation_SEPCOUNT  >> $fic.js 
+				       fi
+				       			       
+					if [[ -n $Activation_FORM ]]
+					then
+				       	print $VIP_FORM$Activation_FORM  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_USERCOLUMN1 ]]
+					then
+				       	print $VIP_USERCOLUMN1$Activation_USERCOLUMN1  >> $fic.js 
+				       fi
+					if [[ -n $Activation_USERCOLUMN2 ]]
+					then
+				       	print $VIP_USERCOLUMN2$Activation_USERCOLUMN2  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_FORMDEF ]]
+					then
+				       	print $VIP_FORMDEF$Activation_FORMDEF  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_PAGEDEF ]]
+					then
+				       	print $VIP_PAGEDEF$Activation_PAGEDEF  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_PAGECONTROL ]]
+					then
+				       	print $VIP_PAGECONTROL$Activation_PAGECONTROL  >> $fic.js 
+				       fi
+				       if [[ -n $Activation_QUEUE ]]
+					then
+				       	print $VIP_QUEUE$Activation_QUEUE  >> $fic.js 
+				       fi
+				       
+					if [[ -n $NbPages ]]
+					then
+				    		print $VIP_PAGECOUNT$NbPages  >> $fic.js
+				    	fi
+					 
+					print $VIP_NAME$MO$fic.AFP  >> $fic.js
+					 
+					chmod 777 $fic.js
+					    	
+				       #print $DATELOG >> $fic.js
+				       #print $HEURELOG >> $fic.js | chmod 777 $fic.js
+					      
+				      #------------------------------------------------------------------------------------
+				      # transfert des fichiers dans les repertoires scrutes par VIP
+				      # dans $REPSCRUTSI/int" (datum afp + .JS) car on simule
+				      # une edition INTERNE
+				      #-------------------------------------------------------------------------------------
+				      
+				      echo "--------- dmonimp(162): Soumission  du fichier hors Process Manager pour VIP dans "$REPSCRUTSI/int/$ImpPageApage/$MO$NEWNAMEINT.$sta >>  /var/pd/edition/dmonimp.log
+				      mv $TRAVMSP/$NEWNAMEINT $REPSCRUTSI/int/$ImpPageApage/$MO$NEWNAMEINT.$sta
+				      echo "--------- dmonimp(163): Soumission  du fichier hors Process Manager pour VIP dans "$REPSCRUTSI/int/$ImpPageApage/$MO$fic.js >>  /var/pd/edition/dmonimp.log
+				      mv $fic.js $REPSCRUTSI/int/$ImpPageApage/$MO$fic.AFP.js
+									      
+				      echo "--------- dmonimp(165): Creation et mise a disposition des .JS pour VIP sous $REPSCRUTSI/int/$ImpPageApage" >>  /var/pd/edition/dmonimp.log
+
+				fi
+				
+				if [ $Activation_Type = ERREUR ]
+				then		
+					print " --------- Etiquette $etiquetteIni INEXISTANTE dans /editique/bin/ini/config.ini pour ce produit...." >> /var/pd/edition/dmonimp.log 
+				fi		
+				print " --------------------------------------------------------------------------------------------------------------------------------------------------- " >> /var/pd/edition/dmonimp.log	             			
+			fi
+		done
+		
+		
+	done	# Boucle sur repertoire
+
+	sleep 60
+	#exit
+done # while true fin

@@ -1,0 +1,67 @@
+- name: creations repertoires pour cron
+  file: 
+      state: directory 
+      path: "{{ ksl_cron }}"
+      owner: "{{ user_1 }}"
+      group: "{{ group_1 }}"
+      mode: 0775
+      recurse: yes
+  tags:
+    - cron
+
+- name: creations repertoires prod pour cron
+  file: 
+      state: directory 
+      path: "{{ item.p }}"
+      owner: "{{ user_1 }}"
+      group: "{{ group_1 }}"
+      mode: 0775
+  with_items:
+    - { p: "{{ ksl_cron_logs }}" }
+    - { p: "{{ ksl_server_tmp }}" }
+    - { p: "{{ ksl_projet_tmp }}" }
+    - { p: "{{ ksl_prod_basedir_cnieg }}" }
+    - { p: "{{ ksl_prod_basedir_crpcen }}" }
+    - { p: "{{ ksl_prod_basedir_kid_atmp_prod }}" }
+    - { p: "{{ ksl_prod_basedir_ratp }}" }
+    - { p: "{{ ksl_preprod_basedir_td }}" }
+    - { p: "{{ ksl_preprod_basedir_tr }}" }
+    - { p: "{{ ksl_prod_basedir_td }}" }
+    - { p: "{{ ksl_prod_basedir_tr }}" }
+    - { p: "{{ ksl_home }}" }
+    - { p: "{{ clt_dir }}" }
+  when:
+    - '"{{ environnement }}" == "PROD"'
+  tags:
+    - cron
+
+- name: creations repertoires integration pour cron
+  file: 
+      state: directory 
+      path: "{{ item.p }}"
+      owner: "{{ user_1 }}"
+      group: "{{ group_1 }}"
+      mode: 0775
+  with_items:
+    - { p: "{{ ksl_cron_logs }}" }
+    - { p: "{{ ksl_server_tmp }}" }
+    - { p: "{{ ksl_projet_tmp }}" }
+    - { p: "{{ ksl_recette_basedir_td }}" }
+    - { p: "{{ ksl_recette_basedir_tr }}" }
+    - { p: "{{ ksl_simu_basedir_td }}" }
+    - { p: "{{ ksl_simu_basedir_tr }}" }
+    - { p: "{{ ksl_home }}" }
+    - { p: "{{ clt_dir }}" }
+  when:
+    - '"{{ environnement }}" == "INT"'
+  tags:
+    - cron
+
+- name: Copy templates files cron de prod
+  template:
+    src: "{{ item }}"
+    dest: "{{ ksl_cron }}/{{ item | basename | regex_replace('\\.j2$', '') }}"
+  with_fileglob:
+    - './templates/cron_{{ environnement_short }}/*.j2'
+  tags:
+    - cron

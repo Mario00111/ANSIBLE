@@ -1,0 +1,95 @@
+- name: group "oinstall" create
+  group:
+    name: "{{ group_3_name }}"
+    gid: "{{ group_3_id }}"
+    state: present
+  tags:
+      - client_oracle
+
+- name: group "dba" create
+  group:
+    name: "{{ group_4_name }}"
+    gid: "{{ group_4_id }}"
+    state: present
+  tags:
+      - client_oracle
+
+- name: Adding user oracle
+  user:
+    name: "{{ user_3 }}"
+    comment: "{{ user_3_comment }}"
+    group: "{{ group_4_name }}"
+    uid: "{{ user_3_id }}"
+    shell: /bin/bash
+    append: true
+  tags:
+      - client_oracle
+
+- name: change password
+  user:
+    name: "{{ user_3 }}"
+    state: present
+    password: "{{ user_3_password | password_hash('sha512') }}"
+  tags:
+      - client_oracle
+
+- name: adding user oracle to group dba
+  user:
+    name: "{{ user_3 }}"
+    groups: "{{ group_4_name }}"
+    append: true
+  tags:
+      - client_oracle
+
+- name: Copy bash rc oracle
+  copy:
+    src: "bashoracle.bashrc"
+    dest: /home/oracle/.bashrc
+    owner: oracle
+    group: oinstall
+    mode: 0644
+    backup: true
+  tags:
+      - client_oracle
+
+- name: creation repertoires
+  file:
+    path: '{{ item }}'
+    state: 'directory'
+    owner: "{{ user_3 }}" 
+    group: "{{ group_3_name }}" 
+    mode: '755'
+  loop:
+    - '{{ folder_oracle }}'
+  tags:
+      - client_oracle
+  
+- name: install tools oracle client
+  unarchive:
+    src: '{{ folder_local_app }}/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_3 }}" 
+    group: "{{ group_3_name }}" 
+    mode: '755'
+  tags:
+      - client_oracle
+
+- name: install tools oracle sqlplus
+  unarchive:
+    src: '{{ folder_local_app }}/instantclient-sqlplus-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_3 }}" 
+    group: "{{ group_3_name }}" 
+    mode: '755'
+  tags:
+      - client_oracle
+
+- name: install tools oracle 
+  unarchive:
+    src: '{{ folder_local_app }}/instantclient-tools-linux.x64-19.23.0.0.0dbru.zip'
+    dest: '{{ folder_oracle }}'
+    owner: "{{ user_3 }}" 
+    group: "{{ group_3_name }}" 
+    mode: '755'
+  tags:
+      - client_oracle

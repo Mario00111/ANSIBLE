@@ -1,0 +1,19 @@
+#-------------------------------------------------------------------------------------------------------------------------------------
+#	composant:	CronServicesKSL.sh
+#	auteur:		S Le Labourier
+#	date :		21/07/2015
+#	Objet:		Tâches planifiées de services composites 
+#	Severite:	Tres importante (ne pas modifier)
+#	Destination:	serveur andromede
+#
+#-------------------------------------------------------------------------------------------------------------------------------------
+#set -x 
+
+
+. {{ ksl_cron }}/CronKsl.cfg
+
+#--------------------------------
+#  KSL Post Comptabilite
+#--------------------------------
+
+${CLT_DIR}/clientc NomServeur=${Ksl_server}:2000 NomProjet=POST_CPR VersionProjet=1.0 EtatProjet=Production Utilisateur=KSL Motdepasse=KSL Service=KidFormatAFP_POST_COMPTA Synchrone=N

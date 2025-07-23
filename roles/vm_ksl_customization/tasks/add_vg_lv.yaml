@@ -1,0 +1,334 @@
+- name: Check Vg1 applications exist
+  shell: 'lsblk | grep "vg--applications"'
+  register: result
+  ignore_errors: true
+
+- name: Debug lvm
+  debug: 
+    var: "result.rc"
+
+- name: Create a volume group for Applications
+  lvg:
+    vg: "{{ vg_name_1 }}"
+    pvs: /dev/sdb1
+    state: present
+  ignore_errors: True
+  failed_when: false
+  no_log: True
+
+- name: Create a logical volume {{ lv_name_1 }}
+  lvol:
+    vg: "{{ vg_name_1 }}"
+    lv: "{{ lv_name_1 }}"
+    size: "{{ lv_size_1 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_1 }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_1 }}/{{ lv_name_1 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_1 }}"
+    state: directory
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}"
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_1 }}
+  mount:
+    name: "/{{ mount_name_1 }}"
+    src: "/dev/{{ vg_name_1 }}/{{ lv_name_1 }}"
+    fstype: ext4
+    state: mounted
+
+- name: Create a logical volume {{ lv_name_2 }}
+  lvol:
+    vg: "{{ vg_name_1 }}"
+    lv: "{{ lv_name_2 }}"
+    size: "{{ lv_size_2 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_2 }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_1 }}/{{ lv_name_2 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_2 }}"
+    state: directory
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}"    
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_2 }}
+  mount:
+    name: "/{{ mount_name_2 }}"
+    src: "/dev/{{ vg_name_1 }}/{{ lv_name_2 }}"
+    fstype: ext4
+    state: mounted
+
+- name: Check Vg2 datas exist
+  shell: 'lsblk | grep "vg--datas"'
+  register: result
+  ignore_errors: true
+
+- debug:
+    var: ansible_lvm
+
+- name: Debug lvm
+  debug: 
+    var: "result.rc"
+
+- name: Create a volume group on vg
+  lvg:
+    vg: "{{ vg_name_2 }}"
+    pvs: /dev/sdc1
+    state: present
+  ignore_errors: True
+  failed_when: false
+  no_log: True
+
+- name: Create a logical volume {{ lv_name_3 }}
+  lvol:
+    vg: "{{ vg_name_2 }}"
+    lv: "{{ lv_name_3 }}"
+    size: "{{ lv_size_3 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_3 }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_2 }}/{{ lv_name_3 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_3 }}"
+    state: directory
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}" 
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_3 }}
+  mount:
+    name: "/{{ mount_name_3 }}"
+    src: "/dev/{{ vg_name_2 }}/{{ lv_name_3 }}"
+    fstype: ext4
+    state: mounted
+
+- name: Create a logical volume {{ lv_name_4 }}
+  lvol:
+    vg: "{{ vg_name_2 }}"
+    lv: "{{ lv_name_4 }}"
+    size: "{{ lv_size_4 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_4 }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_2 }}/{{ lv_name_4 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_4 }}"
+    state: directory
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}" 
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_4 }}
+  mount:
+    name: "/{{ mount_name_4 }}"
+    src: "/dev/{{ vg_name_2 }}/{{ lv_name_4 }}"
+    fstype: ext4
+    state: mounted
+
+- name: Create a logical volume {{ lv_name_5 }}
+  lvol:
+    vg: "{{ vg_name_2 }}"
+    lv: "{{ lv_name_5 }}"
+    size: "{{ lv_size_5 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_5 }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_2 }}/{{ lv_name_5 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_5 }}"
+    state: directory
+    owner: "{{ user_2 }}"
+    group: "{{ group_2 }}" 
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_5 }}
+  mount:
+    name: "/{{ mount_name_5 }}"
+    src: "/dev/{{ vg_name_2 }}/{{ lv_name_5 }}"
+    fstype: ext4
+    state: mounted
+
+- name: Create a logical volume {{ lv_name_6 }}
+  lvol:
+    vg: "{{ vg_name_2 }}"
+    lv: "{{ lv_name_6 }}"
+    size: "{{ lv_size_6 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_6 }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_2 }}/{{ lv_name_6 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_6 }}"
+    state: directory
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}" 
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_6 }}
+  mount:
+    name: "/{{ mount_name_6 }}"
+    src: "/dev/{{ vg_name_2 }}/{{ lv_name_6 }}"
+    fstype: ext4
+    state: mounted
+
+- name: Create a logical volume {{ lv_name_7 }}
+  lvol:
+    vg: "{{ vg_name_2 }}"
+    lv: "{{ lv_name_7 }}"
+    size: "{{ lv_size_7 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_7 }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_2 }}/{{ lv_name_7 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_7 }}"
+    state: directory
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}" 
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_7 }}
+  mount:
+    name: "/{{ mount_name_7 }}"
+    src: "/dev/{{ vg_name_2 }}/{{ lv_name_7 }}"
+    fstype: ext4
+    state: mounted
+
+- name: Create a logical volume {{ lv_name_8 }}
+  lvol:
+    vg: "{{ vg_name_2 }}"
+    lv: "{{ lv_name_8 }}"
+    size: "{{ lv_size_8 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_8 }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_2 }}/{{ lv_name_8 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_8 }}"
+    state: directory
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}" 
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_8 }}
+  mount:
+    name: "/{{ mount_name_8 }}"
+    src: "/dev/{{ vg_name_2 }}/{{ lv_name_8 }}"
+    fstype: ext4
+    state: mounted
+
+- name: Create a logical volume {{ lv_name_9 }}
+  lvol:
+    vg: "{{ vg_name_2 }}"
+    lv: "{{ lv_name_9 }}"
+    size: "{{ lv_size_9 }}"
+    state: present
+  ignore_errors: true
+  failed_when: false
+  no_log: true
+  
+- name: Create File System {{ lv_name_9 }}
+  filesystem:
+    fstype: ext4
+    dev: "/dev/{{ vg_name_2 }}/{{ lv_name_9 }}"
+    
+- name: Create a directory if it does not exist
+  file:
+    path: "/{{ mount_name_9 }}"
+    state: directory
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}" 
+    mode: '0755'
+
+- name: Mount Logical volume FS {{ lv_name_9 }}
+  mount:
+    name: "/{{ mount_name_9 }}"
+    src: "/dev/{{ vg_name_2 }}/{{ lv_name_9 }}"
+    fstype: ext4
+    state: mounted
+
+- name: Creation lien symbolique data vers {{ mount_name_3 }}
+  file:
+    src: "/{{ mount_name_3 }}"
+    dest: "/data"
+    state: link
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}"
+    force: yes
+    mode: 0755
+    follow: false
+  tags:
+      - symbolink
+
+- name: Creation lien symbolique datas vers {{ mount_name_4 }}
+  file:
+    src: "/{{ mount_name_4 }}"
+    dest: "/datas"
+    state: link
+    owner: "{{ user_1 }}"
+    group: "{{ group_1 }}"
+    force: yes
+    mode: 0755
+    follow: false
+  tags:
+      - symbolink

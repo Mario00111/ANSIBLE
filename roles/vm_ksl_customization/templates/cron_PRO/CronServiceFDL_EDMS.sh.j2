@@ -1,0 +1,15 @@
+#-------------------------------------------------------------------------------------------------------------------------------------
+#	composant:	CronServicesESPP.sh
+#	Objet:		Taches planifiees de services composites 
+#	Severite:	Tres importante (ne pas modifier)
+#	Destination:	serveur andromede
+#
+#-------------------------------------------------------------------------------------------------------------------------------------
+#set -x 
+
+. {{ ksl_cron }}/CronKsl.cfg
+
+echo "${Horodateur} : ************Lancement du service" >> ${Ksl_Cron_logs}/CronServiceFDL_EDMS.log
+
+#Lancement du service de recuperation des documents a destination d EDMS
+${CLT_DIR}/clientc Nomserveur=${Ksl_server}:2000 NomProjet=AT_CMP_PROD VersionProjet=1.0 EtatProjet=Production Utilisateur=KSL Motdepasse=KSL Service=PDFEDMSFormat_KID_PROD Synchrone=N

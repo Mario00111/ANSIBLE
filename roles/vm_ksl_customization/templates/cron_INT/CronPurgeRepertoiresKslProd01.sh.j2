@@ -1,0 +1,124 @@
+#-------------------------------------------------------------------------------------------------------------------------------------
+#	composant:	CronPurgeRepertoiresKslSimu01.sh
+#	Objet:		Purger les repertoires 
+#	Destination:	serveur ksl
+#
+#-------------------------------------------------------------------------------------------------------------------------------------
+#set -x 
+
+# source Config 
+. {{ ksl_cron }}/CronKsl.cfg
+
+#-------------------------------------------------
+#  Purge des repertoires tmp du serveur ksl
+#-------------------------------------------------
+
+echo "${Horodateur} : Debut purge des repertoires tmp du serveur ksl" >> ${LOG}
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Server_Tmp} : $(find ${Ksl_Server_Tmp} -type f -mtime +1 | wc -l) fichier[s])" >>${LOG}
+find "${Ksl_Server_Tmp}" -type f -cmin +720 -exec rm -rf {} \;
+echo "${Horodateur} : Fin purge des repertoires tmp du serveur ksl" >> ${LOG}
+
+#-------------------------------------------------
+#  Purge des repertoires tmp du dossier projet ksl
+#-------------------------------------------------
+
+echo "${Horodateur} : Debut purge du repertoir tmp projet ksl" >> ${LOG}
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Projet_Tmp} : $(find ${Ksl_Projet_Tmp} -type f -mtime +1 | wc -l) fichier[s])" >>${LOG}
+find "${Ksl_Projet_Tmp}" -type f -cmin +720 -exec rm -rf {} \;
+echo "${Horodateur} : Fin purge du repertoir tmp projet ksl" >> ${LOG}
+
+
+#-------------------------------------------------
+#  Purge des repertoires de Recette
+#-------------------------------------------------
+
+echo "${Horodateur} : Debut purge des repertoires de Recette" >> ${LOG}
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/cpr/gen/save/ : $(find ${Ksl_Recette_BaseDir}/cpr/gen/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/cpr/gen/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/cpr/gen/xmlgen/ : $(find ${Ksl_Recette_BaseDir}/cpr/gen/xmlgen/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/cpr/gen/xmlgen/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/cpr/kid/save/ : $(find ${Ksl_Recette_BaseDir}/cpr/kid/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/cpr/kid/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/cpr/post/save/ : $(find ${Ksl_Recette_BaseDir}/cpr/post/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/cpr/post/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/cpr/post/tmp/ : $(find ${Ksl_Recette_BaseDir}/cpr/post/tmp/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/cpr/post/tmp/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/edms/KID/save_LOT/ : $(find ${Ksl_Recette_BaseDir}/edms/KID/save_LOT/ -type d -name \"20*\" -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/edms/KID/save_LOT/ -type d -name "20*" -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/etats/save/ : $(find ${Ksl_Recette_BaseDir}/etats/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/etats/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/stde/save/ : $(find ${Ksl_Recette_BaseDir}/stde/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/stde/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/stde/xmlstde/ : $(find ${Ksl_Recette_BaseDir}/stde/xmlstde/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/stde/xmlstde/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/grana/save/ : $(find ${Ksl_Recette_BaseDir}/grana/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/grana/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/grana/xmlfgic/ : $(find ${Ksl_Recette_BaseDir}/grana/xmlfgic/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/grana/xmlfgic/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/decm/save/ : $(find ${Ksl_Recette_BaseDir}/decm/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/decm/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Recette_BaseDir}/decm/xmldecm/ : $(find ${Ksl_Recette_BaseDir}/decm/xmldecm/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Recette_BaseDir}/decm/xmldecm/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : purge des repertoires de Recette effectuees avec succes" >> ${LOG}
+
+
+
+#-------------------------------------------------
+#  Purge des repertoires de Simu
+#-------------------------------------------------
+
+echo "${Horodateur} : Debut purge des repertoires de Simu" >> ${LOG}
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/cpr/gen/save/ : $(find ${Ksl_Simu_BaseDir_TD}/cpr/gen/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/cpr/gen/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/cpr/gen/xmlgen/ : $(find ${Ksl_Simu_BaseDir_TD}/cpr/gen/xmlgen/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/cpr/gen/xmlgen/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/cpr/kid/save/ : $(find ${Ksl_Simu_BaseDir_TD}/cpr/kid/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/cpr/kid/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/cpr/post/save/ : $(find ${Ksl_Simu_BaseDir_TD}/cpr/post/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/cpr/post/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/cpr/post/tmp/ : $(find ${Ksl_Simu_BaseDir_TD}/cpr/post/tmp/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/cpr/post/tmp/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/gcos/save/ : $(find ${Ksl_Simu_BaseDir_TD}/gcos/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/gcos/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/gcos/xmlgen/ : $(find ${Ksl_Simu_BaseDir_TD}/gcos/xmlgen/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/gcos/xmlgen/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/edms/KID/save_LOT/ : $(find ${Ksl_Simu_BaseDir_TD}/edms/KID/save_LOT/ -type d -name \"20*\" -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/edms/KID/save_LOT/ -type d -name "20*" -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/edms/ESPP/save_LOT/ : $(find ${Ksl_Simu_BaseDir_TD}/edms/ESPP/save_LOT/ -type d -name \"20*\" -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/edms/ESPP/save_LOT/ -type d -name "20*" -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/espp/save/ : $(find ${Ksl_Simu_BaseDir_TD}/espp/save/ -type d -name \"EP_*\" -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/espp/save/ -type d -name "EP_*" -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/espp/result/ : $(find ${Ksl_Simu_BaseDir_TD}/espp/result/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/espp/result/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/etats/save/ : $(find ${Ksl_Simu_BaseDir_TD}/etats/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/etats/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/stde/save/ : $(find ${Ksl_Simu_BaseDir_TD}/stde/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/stde/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/stde/xmlstde/ : $(find ${Ksl_Simu_BaseDir_TD}/stde/xmlstde/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/stde/xmlstde/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/grana/save/ : $(find ${Ksl_Simu_BaseDir_TD}/grana/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/grana/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/grana/xmlfgic/ : $(find ${Ksl_Simu_BaseDir_TD}/grana/xmlfgic/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/grana/xmlfgic/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TR}/stde/save/ : $(find ${Ksl_Simu_BaseDir_TR}/stde/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TR}/stde/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TR}/stde/xmlstde/ : $(find ${Ksl_Simu_BaseDir_TR}/stde/xmlstde/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TR}/stde/xmlstde/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TR}/grana/save/ : $(find ${Ksl_Simu_BaseDir_TR}/grana/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TR}/grana/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TR}/grana/xmlfgic/ : $(find ${Ksl_Simu_BaseDir_TR}/grana/xmlfgic/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TR}/grana/xmlfgic/ -type f -mtime +7 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/decm/save/ : $(find ${Ksl_Simu_BaseDir_TD}/decm/save/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/decm/save/ -type f -mtime +15 -exec rm -rf {} \;
+echo "${Horodateur} : Suppression des fichiers ${Ksl_Simu_BaseDir_TD}/decm/xmldecm/ : $(find ${Ksl_Simu_BaseDir_TD}/decm/xmldecm/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+find ${Ksl_Simu_BaseDir_TD}/decm/xmldecm/ -type f -mtime +7 -exec rm -rf {} \;
+#echo "${Horodateur} : Suppression des fichiers /datas/Simu/Kid_ATMP_Simu/ : $(find /datas/Simu/Kid_ATMP_Simu/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+#find /datas/Simu/Kid_ATMP_Simu/ -type f -mtime +7 -exec rm -rf {} \;
+#echo "${Horodateur} : Suppression des fichiers /datas/Simu/CNIEG/save_pdf/ : $(find /datas/Simu/CNIEG/save_pdf/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+#find /datas/Simu/CNIEG/save_pdf/ -type f -mtime +15 -exec rm -rf {} \;
+#echo "${Horodateur} : Suppression des fichiers /datas/Simu/CNIEG/save_flux/ : $(find /datas/Simu/CNIEG/save_flux/ -type f -mtime +15 | wc -l) fichier[s])" >>${LOG}
+#find /datas/Simu/CNIEG/save_flux/ -type f -mtime +15 -exec rm -rf {} \;
+#echo "${Horodateur} : purge des repertoires de Simu effectuees avec succes" >> ${LOG}
+
+
+

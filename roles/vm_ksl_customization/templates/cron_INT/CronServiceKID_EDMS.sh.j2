@@ -1,0 +1,16 @@
+#-------------------------------------------------------------------------------------------------------------------------------------
+#	composant:	CronServicesESPP.sh
+#	Objet:		T�ches planifi�es de services composites 
+#	Severite:	Tres importante (ne pas modifier)
+#	Destination:	serveur 
+#
+#-------------------------------------------------------------------------------------------------------------------------------------
+#set -x 
+
+. {{ ksl_cron }}/CronKsl.cfg
+
+echo "${Horodateur} : ************Lancement du service" >> ${Ksl_Cron_logs}/CronServiceKID_EDMS.log
+
+
+#Lancement du service de r�cup�ration des documents � destination d'EDMS
+$CLT_DIR/clientc Nomserveur=${Ksl_server}:2000 NomProjet=PENSION_KID_PROD VersionProjet=1.3 EtatProjet=Production Utilisateur=KSL Motdepasse=KSL Service=PDFEDMSFormat_KID_PROD Synchrone=N

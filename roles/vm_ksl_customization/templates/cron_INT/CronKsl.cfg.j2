@@ -1,0 +1,34 @@
+#######################################################################
+#######              Fichier de configuration KSL V8             ######
+#######################################################################
+Horodateur=$(date '+%d/%m/%Y %X')
+
+# Server Name
+Ksl_server="{{ inventory_hostname }}"
+
+# {0} passe en parametre du cron voir crontab
+LOG="${0}.log"
+
+# Dossier contenant les cron
+Ksl_Cron="{{ ksl_cron }}"
+
+# Dossier contenant les logs des cron
+Ksl_Cron_logs="{{ ksl_cron_logs }}/"
+
+# Dossier tmp server KSL
+Ksl_Server_Tmp="{{ ksl_server_tmp }}/"
+
+# Dossier tmp projet KSL
+Ksl_Projet_Tmp="{{ ksl_projet_tmp }}/"
+
+#  Purge des repertoires de Recette
+Ksl_Recette_BaseDir_TD="{{ ksl_recette_basedir_td }}"
+Ksl_Recette_BaseDir_TR="{{ ksl_recette_basedir_tr }}"
+
+#  Purge des repertoires de Simu
+Ksl_Simu_BaseDir_TD="{{ ksl_simu_basedir_td }}"
+Ksl_Simu_BaseDir_TR="{{ ksl_simu_basedir_tr }}"
+
+# Dossier ksl server
+export KSL_HOME="{{ ksl_home }}"
+export CLT_DIR="{{ clt_dir }}"

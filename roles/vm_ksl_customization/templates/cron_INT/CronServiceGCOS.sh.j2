@@ -1,0 +1,21 @@
+#-------------------------------------------------------------------------------------------------------------------------------------
+#	composant:	CronServicesGcos.sh
+#	Objet:		Tâches planifiées de services composites 
+#	Severite:	Tres importante (ne pas modifier)
+#	Destination:	serveur ${Ksl_server}
+#
+#-------------------------------------------------------------------------------------------------------------------------------------
+#set -x 
+
+. {{ ksl_cron }}/CronKsl.cfg
+
+#--------------------------------
+#  KSL_GCOS_Recette
+#--------------------------------
+
+${CLT_DIR}/clientc Nomserveur=${Ksl_server}:2000 NomProjet=KSL_GCOS VersionProjet=1.0 EtatProjet=Production Utilisateur=KSL Motdepasse=KSL Service=ArchiveToColombus_Eclat Synchrone=N
+${CLT_DIR}/clientc Nomserveur=${Ksl_server}:2000 NomProjet=KSL_GCOS VersionProjet=1.0 EtatProjet=Production Utilisateur=KSL Motdepasse=KSL Service=ArchiveToINT Synchrone=N
+${CLT_DIR}/clientc Nomserveur=${Ksl_server}:2000 NomProjet=KSL_GCOS VersionProjet=1.0 EtatProjet=Production Utilisateur=KSL Motdepasse=KSL Service=ArchiveToINT_RV Synchrone=N
+${CLT_DIR}/clientc Nomserveur=${Ksl_server}:2000 NomProjet=KSL_GCOS VersionProjet=1.0 EtatProjet=Production Utilisateur=KSL Motdepasse=KSL Service=ArchiveToINT_PAYSAGE Synchrone=N
+${CLT_DIR}/clientc Nomserveur=${Ksl_server}:2000 NomProjet=KSL_GCOS VersionProjet=1.0 EtatProjet=Production Utilisateur=KSL Motdepasse=KSL Service=ArchiveToPM Synchrone=N
+${CLT_DIR}/clientc Nomserveur=${Ksl_server}:2000 NomProjet=KSL_GCOS VersionProjet=1.0 EtatProjet=Production Utilisateur=KSL Motdepasse=KSL Service=ArchiveToPM_RV Synchrone=N

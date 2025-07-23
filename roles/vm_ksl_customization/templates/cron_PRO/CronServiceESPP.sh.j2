@@ -1,0 +1,18 @@
+#-------------------------------------------------------------------------------------------------------------------------------------
+#	composant:	CronServicesESPP.sh
+#	Objet:		Taches planifiees de services composites 
+#	Severite:	Tres importante (ne pas modifier)
+#	Destination:	serveur ksl
+#
+#-------------------------------------------------------------------------------------------------------------------------------------
+#set -x 
+
+# source Config 
+. {{ ksl_cron }}/CronKsl.cfg
+
+echo "${Horodateur} : ************Lancement du service" >> ${Ksl_Cron_logs}/CronServiceESPP.log
+
+#Lancement du service de recuperation des documents a destination de l'espace personnel
+${CLT_DIR}/clientc Nomserveur=${Ksl_server}:2000 NomProjet=ESPACE_PERSONNEL_PROD Utilisateur=KSL Motdepasse=KSL Service=PDFEDMSFormat_ESPP Synchrone=N
+
+

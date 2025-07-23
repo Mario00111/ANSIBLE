@@ -1,0 +1,17 @@
+#-------------------------------------------------------------------------------------------------------------------------------------
+#	composant:	CronServicesDoublonKSLTransverse.sh
+#	Objet:		Tâches planifiées de services composites 
+#	Severite:	Tres importante (ne pas modifier)
+#	Destination:	serveur ${Ksl_server}
+#
+#-------------------------------------------------------------------------------------------------------------------------------------
+#set -x 
+
+# source Config 
+. {{ ksl_cron }}/CronKsl.cfg
+
+#--------------------------------
+#  KSL Kid
+#--------------------------------
+
+${CLT_DIR}/clientc NomServeur=${Ksl_server}:2000 NomProjet=TRANSVERSE_KID_PROD VersionProjet=1.0 EtatProjet=Production Utilisateur=KSL Motdepasse=KSL Service=KID_Check_Doublon Synchrone=N

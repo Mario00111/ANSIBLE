@@ -1,0 +1,52 @@
+# This is the default ansible 'hosts' file.
+#
+# It should live in /etc/ansible/hosts
+#
+#   - Comments begin with the '#' character
+#   - Blank lines are ignored
+#   - Groups of hosts are delimited by [header] elements
+#   - You can enter hostnames or ip addresses
+#   - A hostname/ip can be a member of multiple groups
+
+# Ex 1: Ungrouped hosts, specify before any group headers.
+
+## green.example.com
+## blue.example.com
+## 192.168.100.1
+## 192.168.100.10
+
+# Ex 2: A collection of hosts belonging to the 'webservers' group
+
+[servers]
+#dsilog.cpr.sncf.fr ansible_host=192.168.168.167
+#devchatcpr.cpr.sncf.fr ansible_host=192.168.168.9
+#devmobria ansible_host=192.168.168.79
+#quamobria ansible_host=192.168.168.211
+#quamobsiteinstit ansible_host=192.168.168.212
+#quamobepw ansible_host=192.168.168.213      
+#megen ansible_host=192.168.167.122
+#lynx ansible_host=126.51.106.213
+#promethee ansible_host=192.168.168.76
+#devtmamobria ansible_host=192.168.168.216
+#devtmamobepw ansible_host=192.168.168.217
+#eesi ansible_host=192.168.167.4
+devtme ansible_host=192.168.168.76
+
+[weblogicadmin]
+#quamobriw ansible_host=192.168.168.156
+#quamobwlm.cpr.sncf.fr
+#devmobwlm.cpr.sncf.fr
+#recows2.cpr.sncf.fr
+#prodows2.cpr.sncf.fr
+#devosboa.cpr.sncf.fr
+#prodrd.cpr.sncf.fr
+
+
+[weblogicservers_vmware]
+#quamobriw ansible_host=192.168.168.156 
+#quamobwlm ansible_host=192.168.168.214
+#devmobwlm ansible_host=192.168.168.82
+#recows2 ansible_host=192.168.168.215
+#prodows2 ansible_host=192.168.167.123
+#devosboa ansible_host=192.168.168.183
+#prodrd.cpr.sncf.fr ansible_host=192.168.167.124

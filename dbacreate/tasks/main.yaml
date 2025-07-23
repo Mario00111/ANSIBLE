@@ -1,0 +1,11 @@
+# Creation user et Dump
+
+- name: Lancement du shell sur oda 
+  command: 'sudo -u oratme01 {{ folder_dba_tools }}/Creer_Schema_EP_CPR.sh -s {{ dba_user }} -p {{ dba_pwd }} -n 20'
+  register: command_result
+  ignore_errors: True
+
+- name: Module controle de command sudo
+  fail:
+    msg: "Le lancement du shell Creer_Schema_EP_ est en erreur "
+  when: "'FAILED' in command_result.stderr"

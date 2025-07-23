@@ -1,0 +1,45 @@
+# This is the default ansible 'hosts' file.
+#
+# It should live in /etc/ansible/hosts
+#
+#   - Comments begin with the '#' character
+#   - Blank lines are ignored
+#   - Groups of hosts are delimited by [header] elements
+#   - You can enter hostnames or ip addresses
+#   - A hostname/ip can be a member of multiple groups
+
+# Ex 1: Ungrouped hosts, specify before any group headers.
+
+## green.example.com
+## blue.example.com
+## 192.168.100.1
+## 192.168.100.10
+
+# Ex 2: A collection of hosts belonging to the 'webservers' group
+
+[servers]
+#### DEV ####
+#devmobria ansible_host=192.168.168.79
+#devmobsiteinstit ansible_host=192.168.168.80
+#devmobepw ansible_host=192.168.168.81
+#### QUA ####
+quamobria ansible_host=192.168.168.211
+#quamobsiteinstit ansible_host=192.168.168.212
+#quamobepw ansible_host=192.168.168.213
+#quamobriw ansible_host=192.168.168.156
+
+[weblogicadmin]
+#### DEV ####
+#devmobwlm.cpr.sncf.fr
+#### QUA ####
+#quamobwlm.cpr.sncf.fr
+#quamobriw.cpr.sncf.fr
+
+
+[weblogicservers_vmware]
+#### DEV ####
+#devmobwlm ansible_host=192.168.168.82
+#### QUA ####
+#quamobwlm ansible_host=192.168.168.214
+#quamobriw ansible_host=192.168.168.156
+

@@ -1,0 +1,39 @@
+- name: Install wget packages RHEL
+  yum:
+    name: "wget"
+    state: "latest"
+  tags:
+      - InstallCBRH
+
+- name: Install Repo Cyberwatch DEB
+  shell: |
+      cat << EOF | 
+      [cyberwatch]
+      name=CyberWatch RPM Repository
+      baseurl= https://sd-cyberwatch.cpr.local/repos/rpm/
+      enabled=1
+      gpgcheck=1
+      gpgkey= https://sd-cyberwatch.cpr.local/repos/keys/RPM-CYBERWATCH-GPG-KEY
+      sslverify=0
+      EOF
+      sudo tee /etc/yum.repos.d/cyberwatch-agent.repo > /dev/null
+  tags:
+      - InstallCBRH
+
+- name: Install and register cyberwatch-agent RHEL8+
+  shell: | 
+    sudo yum install -y cyberwatch-agent && sudo cyberwatch-agent register --access-key-id '39SkNYFSBFai9naFywhE4eUM+pwwcVRCU9s1LuGgxas=' --secret-access-key 'GU+12hg2Gk9i6J6fSBRDNL3+B27j0CSDFLSkev1p2+Gk7X9DxoO4op4R1N1WfBDf++zg+D9hsiFTvwcD0jBg5g==' --api-url 'https://sd-cyberwatch.cpr.local/api/v2/' --allow_selfsigned true --groups ',' 
+  when:
+    - 'ansible_distribution_major_version|int >= 8'
+  tags:
+      - InstallCBRH
+      - RHE8plus
+
+- name: Install and register cyberwatch-agent RHEL6/7
+  shell: | 
+    sudo yum --enablerepo cyberwatch install -y cyberwatch-agent-3.2-0.noarch && sudo -u cyberwatch-agent cyberwatch-agent register --access-key-id 'qn+Yhy8FL6g4b74yG9gZzklkCyXLe1pBDdiIn9PXQXk=' --secret-access-key 'xoMYFVIBI1DCV4QbhMMH5k/31x70xRJvqR3Cn4sk5oXGpKH2uxfG08BvNzzRNXiYgJS+XtY8xRdzNCofV8pJNg==' --api-url 'https://sd-cyberwatch.cpr.local/api/v2/' --allow_selfsigned true --groups ','
+  when:
+    - 'ansible_distribution_major_version|int < 8'
+  tags:
+      - InstallCBRH
+      - RHE67plus

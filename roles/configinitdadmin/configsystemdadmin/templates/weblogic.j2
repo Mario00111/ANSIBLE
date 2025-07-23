@@ -1,0 +1,16 @@
+[Unit]
+Description=weblogic_restart
+After=multi-user.target
+
+[Service]
+Type=forking
+
+User=oracle
+Group=oinstall
+UMask=007
+
+ExecStart={{ folder_scripts }}/start.sh ALL
+ExecStop={{ folder_scripts }}/stop.sh ALL
+
+[Install]
+WantedBy=multi-user.target

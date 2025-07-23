@@ -1,0 +1,22 @@
+# Configuration init.d 
+
+- name: copie du template rc.nodemanager vers VM Admin
+  template:
+    src: rc.weblogic.j2
+    dest: "/etc/init.d/rc.weblogic"
+    owner: "root"
+    group: "root"
+    mode: 0755
+
+- name: Creation lien symbolique
+  file:
+    src: "/etc/init.d/rc.weblogic"
+    dest: "/etc/systemd/system/weblogic.service"
+    state: link
+    owner: "root"
+    group: "root"
+    mode: 0755
+
+- name: lancement nodemanager
+  shell: 'su -l root -c "systemctl daemon-reload | systemctl enable weblogic.service | systemctl start weblogic.service"'
+

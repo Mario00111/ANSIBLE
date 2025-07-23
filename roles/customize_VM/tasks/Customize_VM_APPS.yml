@@ -1,0 +1,7 @@
+- name: Charger les variables globales
+  include_vars:
+    file: inventories/generic_vars/vars_SA_ALL.yaml
+
+- name: Exécuter le rôle de customisation Docker
+  include_role:
+    name: vm_docker_customization

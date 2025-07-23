@@ -1,0 +1,27 @@
+- name: Install wget packages RHEL
+  yum:
+    name: "wget"
+    state: "latest"
+  tags:
+      - InstallCBRH
+
+- name: Get sentinel One
+  get_url:
+    url: "http://192.168.168.163/SentinelAgent_linux_x86_64_v23_3_2_12.rpm"
+    dest: /opt
+    mode: '0755'
+    force: true
+  tags:
+        - InstallS1RHE
+
+- name: install S1
+  shell: | 
+      sudo rpm -ivh /opt/SentinelAgent_linux_x86_64_v23_3_2_12.rpm
+  tags:
+        - InstallS1RHE
+
+- name: reference S1
+  shell: | 
+      sudo /opt/sentinelone/bin/sentinelctl management token set eyJ1cmwiOiAiaHR0cHM6Ly9ldWNlMS1zbnMtbXNzcC5zZW50aW5lbG9uZS5uZXQiLCAic2l0ZV9rZXkiOiAiOTlmZjRlNzZkMWNmYjk5MSJ9
+  tags:
+        - InstallS1RHE

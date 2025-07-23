@@ -1,0 +1,16 @@
+[Unit]
+Description=nodemanager
+After=multi-user.target
+
+[Service]
+Type=simple
+
+User=oracle
+Group=oracle
+UMask=007
+
+ExecStart= {{ folder_domain }}/startWebLogic.sh
+ExecStop= {{ folder_domain }}/stopWebLogic.sh
+
+[Install]
+WantedBy=default.target

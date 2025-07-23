@@ -1,0 +1,10 @@
+- name: Customize VM
+  hosts: '{{ df }}'
+  gather_facts: false
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  roles:
+    - vm_mid_customization

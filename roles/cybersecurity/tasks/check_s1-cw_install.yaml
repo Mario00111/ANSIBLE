@@ -1,0 +1,44 @@
+# - name: Check cyberwatch-agent
+#   stat:
+#     path: /var/log/cyberwatch-agent
+#   register: cyberwatch_exist
+
+- name: Check cyberwatch-agents
+  raw: |
+    ls /var/log/cyberwatch-agent
+  register: cyberwatch_exist
+
+
+- name: debug
+  debug: 
+    var: "{{ inventory_hostname }}/{{ ansible_distribution }}/{{ ansible_distribution_major_version }}"
+
+- name: Persistance var cyber
+  set_fact:
+    cyb: cyberwatch_exist.rc
+
+# - name: List cyberwatch-agent
+#   copy:
+#       dest: "/home/ansible/extract_cw_deploy.txt"
+#       content: "{{ inventory_hostname }};cyberwatch_exist.stat.exists"
+#   delegate_to: localhost  
+
+- name: List cyberwatch-agent
+  local_action: shell echo "Host {{ inventory_hostname }};{{ cyberwatch_exist.stat.exists }} \r\n" >> /home/ansible/extract_cw_deploy.txt
+
+- name: Chech process s1
+  shell: |
+        ps -ef |  grep s1
+  register: process_s1
+
+# - name: List s1
+#   copy:
+#       dest: "/home/ansible/extract_s1_deploy.txt"
+#       content: "{{ inventory_hostname }};process_s1.rc"
+#   delegate_to: localhost
+- name: Persistance var cyber
+  set_fact:
+    s1: "process_s1.rc"
+
+- name: List s1
+  local_action: shell echo "Host {{ inventory_hostname }};{{ process_s1.rc }} \r\n" >> /home/ansible/extract_s1_deploy.txt    

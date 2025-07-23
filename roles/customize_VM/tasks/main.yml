@@ -1,0 +1,7 @@
+---
+- name: Déterminer le playbook de customisation
+  set_fact:
+    customize_task: "Customize_VM_{{ dns_parts[1] | upper }}.yml"
+
+- name: Exécuter le fichier de customisation selon DF
+  include_tasks: "{{ customize_task }}"

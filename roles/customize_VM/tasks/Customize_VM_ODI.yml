@@ -1,0 +1,15 @@
+- name: Charger les variables globales
+  include_vars:
+    file: inventories/generic_vars/vars_SA_ALL.yaml
+
+- name: Pause entre chargement fichier vars
+  pause:
+    seconds: 5
+
+- name: Charger les variables globales
+  include_vars:
+    file: inventories/{{ env_long }}/group_vars/{{ vars_upper }}
+
+- name: Exécuter le rôle de customisation ODI
+  include_role:
+    name: vm_odi_customization

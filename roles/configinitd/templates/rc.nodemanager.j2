@@ -1,0 +1,16 @@
+[Unit]
+Description=nodemanager
+After=multi-user.target
+
+[Service]
+Type=simple
+
+User=oracle
+Group=oracle
+UMask=007
+
+ExecStart= {{ folder_domain }}/bin/startNodeManager.sh
+ExecStop= {{ folder_domain }}/bin/stopNodeManager.sh
+
+[Install]
+WantedBy=default.target

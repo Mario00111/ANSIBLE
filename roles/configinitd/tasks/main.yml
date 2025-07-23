@@ -1,0 +1,22 @@
+# Configuration init.d 
+
+- name: copie du template rc.nodemanager vers VM
+  template:
+    src: rc.nodemanager.j2
+    dest: "/etc/init.d/rc.nodemanager"
+    owner: "root"
+    group: "root"
+    mode: 0755
+
+- name: Creation lien symbolique
+  file:
+    src: "/etc/init.d/rc.nodemanager"
+    dest: "/etc/systemd/system/nodemanager.service"
+    state: link
+    owner: "root"
+    group: "root"
+    mode: 0755
+
+- name: lancement nodemanager
+  shell: 'su -l root -c "systemctl daemon-reload | systemctl enable nodemanager.service | systemctl start nodemanager.service"'
+

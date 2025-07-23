@@ -1,0 +1,32 @@
+- name: Install wget packages DEB
+  apt:
+    name:
+      - wget
+    state: latest
+    update_cache: yes
+  tags:
+      - Debug
+
+- name: Get sentinel One
+  get_url:
+    url: "http://192.168.168.163/SentinelAgent_linux_x86_64_v23_3_2_12.deb"
+    dest: /opt
+    mode: '0755'
+    force: true
+  register: s1_deb
+  tags:
+        - InstallS1DEB
+
+- name: install S1
+  shell: | 
+      sudo dpkg -i /opt/SentinelAgent_linux_x86_64_v23_3_2_12.deb
+  register: s1_deb
+  tags:
+        - InstallS1DEB
+
+- name: reference S1
+  shell: | 
+      sudo /opt/sentinelone/bin/sentinelctl management token set eyJ1cmwiOiAiaHR0cHM6Ly9ldWNlMS1zbnMtbXNzcC5zZW50aW5lbG9uZS5uZXQiLCAic2l0ZV9rZXkiOiAiOTlmZjRlNzZkMWNmYjk5MSJ9
+  register: s1_deb
+  tags:
+        - InstallS1DEB

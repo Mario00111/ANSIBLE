@@ -1,0 +1,9 @@
+- name: Charger les variables globales
+  include_vars:
+    file: inventories/generic_vars/vars_SA_ALL.yaml
+
+
+
+- name: Exécuter le rôle de customisation LDAP
+  include_role:
+    name:  vm_mid-LDAP_customization

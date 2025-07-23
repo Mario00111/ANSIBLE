@@ -1,0 +1,128 @@
+###############################################################################
+#####################  DEPLOIEMENT APACHE                 #####################
+###############################################################################
+
+
+########## CREATION REPERTOIRE CONF ########
+- name: creations repertoires
+  file: state=directory path="{{ item.p }}"
+  with_items:
+   - { p: "{{ folder_confd }}/{{ folder_ext }}" }
+   - { p: "{{ folder_confd }}/{{ folder_secure }}" }
+   - { p: "{{ folder_confd }}/{{ folder_www }}" }
+   - { p: "{{ folder_EP_tmp }}" }
+
+########## PROPERTIES CONF ########
+- stat: path="{{ folder_conf }}"
+  register: conf
+
+- name: copie vers conf
+  copy:
+   src: "{{ item }}"
+   dest: "{{ folder_conf }}"
+  with_items:
+   - httpd.conf
+   - httpd.ep.conf
+  when: conf.stat.exists
+
+########## PROPERTIES CONFD ########
+- stat: path="{{ folder_confd }}"
+  register: confd
+
+- name: copie vers confd
+  copy:
+   src: "{{ item }}"
+   dest: "{{ folder_confd }}"
+  with_items:
+   - 2.quaria.cpr.sncf.fr.conf
+   - 3.mod_auth_cas.conf
+   - 4.secure.cprpsncf.fr.conf
+   - ErrorDocument.conf
+   - ext.cprpsncf.fr.conf
+  when: confd.stat.exists
+
+########## PROPERTIES CONFD EXT ########
+- stat: path="{{ folder_confd }}/{{ folder_ext }}"
+  register: confdext
+
+- name: copie vers confd ext
+  copy:
+   src: "{{ item }}"
+   dest: "{{ folder_confd }}/{{ folder_ext }}"
+  with_items:
+   - 1.externe.conf
+  when: confdext.stat.exists
+  
+########## PROPERTIES CONFD SECURE ########
+- stat: path="{{ folder_confd }}/{{ folder_secure }}"
+  register: confdsecure
+
+- name: copie vers confd secure 
+  copy:
+   src: "{{ item }}"
+   dest: "{{ folder_confd }}/{{ folder_secure }}"
+  with_items:
+   - 1.EP-Cas.conf
+   - 2.EP.conf
+   - 3.EP-TS.conf
+   - 4.GipBdc.conf
+   - 5.EP-STEP-Identite-web.conf
+  when: confdsecure.stat.exists
+
+########## PROPERTIES CONFD WWW ########
+- stat: path="{{ folder_confd }}/{{ folder_www }}"
+  register: confdwww
+
+- name: copie vers confd www
+  copy:
+   src: "{{ item }}"
+   dest: "{{ folder_confd }}/{{ folder_www }}"
+  with_items:
+   - 1.site.conf
+  when: confdwww.stat.exists
+
+########## PROPERTIES HTTPD MODULES ########
+- stat: path="{{ folder_modules }}"
+  register: confmodules
+
+- name: copie vers httpd modules
+  copy:
+   src: "{{ item }}"
+   dest: "{{ folder_modules }}"
+   mode: 0755
+  with_items:
+   - mod_auth_cas.so
+   - mod_ssl.so
+  when: confmodules.stat.exists
+  
+########## FILES VAR/WWW ########
+
+- stat: path="{{ folder_var_www }}"
+  register: properties
+
+- name: Copie des properties depuis repo
+  copy:
+    src: "{{ folder_local_www }}/"
+    dest: "{{ folder_var_www }}/"
+    owner: root
+    group: root
+    mode: '0755'
+  register: grep_result
+  ignore_errors: yes
+  when: properties.stat.exists
+
+########## APACHE RELOAD/START ########
+- name: reload service httpd, in all cases
+  service:
+    name: httpd
+    enabled: yes
+
+- name: reload service httpd, in all cases
+  service:
+    name: httpd
+    state: reloaded
+
+- name: reload service httpd, in all cases
+  service:
+    name: httpd
+    state: restarted

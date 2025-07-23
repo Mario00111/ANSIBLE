@@ -1,0 +1,33 @@
+- name: Install wget packages DEB
+  apt:
+    name:
+      - wget
+    state: latest
+    update_cache: yes
+  ignore_errors: true
+  tags:
+     - Debug 
+
+- name: Install Repo Cyberwatch DEB
+  shell: | 
+      sudo install -m 0755 -d /etc/apt/keyrings && wget --no-check-certificate -O- https://sd-cyberwatch.cpr.local/repos/keys/APT-CYBERWATCH-GPG-KEY | gpg --dearmor | sudo tee /etc/apt/keyrings/cyberwatch-archive-keyring.gpg > /dev/null
+      sudo chmod a+r /etc/apt/keyrings/cyberwatch-archive-keyring.gpg 
+      echo "deb [signed-by=/etc/apt/keyrings/cyberwatch-archive-keyring.gpg] https://sd-cyberwatch.cpr.local/repos/apt any main"   | sudo tee /etc/apt/sources.list.d/cyberwatch-agent.list > /dev/null 
+      echo "Acquire::https::sd-cyberwatch.cpr.local::Verify-Peer \"false\"; Acquire::https::sd-cyberwatch.cpr.local::Verify-Host \"false\";" | sudo tee /etc/apt/apt.conf.d/99cyberwatch >/dev/null 
+  register: cyberwatch_deb
+  tags:
+      - Debug
+      
+- name: Update apt repositories and cache on server
+  apt:
+    update_cache: yes
+  ignore_errors: true
+  tags:
+      - Debug
+
+- name: Install and register cyberwatch-agent
+  shell: | 
+    sudo apt-get install -y cyberwatch-agent && sudo cyberwatch-agent register --access-key-id 'EUBM5glIKOKOf790Uco4Unh4/R/U0VyU3ZKEAEtSJbs=' --secret-access-key 'h3jza61KO0U6TFpuCHPIgq2lsuu3KO+sDxHvhmMAiyNwDofruN0TkLniNY3mmyN4Cta2g3OTTLMAgRw4Y9sQPA==' --api-url 'https://sd-cyberwatch.cpr.local/api/v2/' --allow_selfsigned true --groups ','
+  register: cyberwatch_deb
+  tags:
+      - InstallCBDEB

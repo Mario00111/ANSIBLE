@@ -1,0 +1,16 @@
+[Unit]
+Description=nodemanager
+After=multi-user.target
+
+[Service]
+Type=forking
+
+User=oracle
+Group=oracle
+UMask=007
+
+ExecStart={{ folder_scripts }}/start.sh NM
+ExecStop={{ folder_scripts }}/stop.sh NM
+
+[Install]
+WantedBy=multi-user.target

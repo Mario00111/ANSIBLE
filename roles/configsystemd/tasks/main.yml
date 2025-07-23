@@ -1,0 +1,20 @@
+###############################################################################
+#####################  Param systemd nodemanager WL        #####################
+###############################################################################
+
+# Configuration init.d 
+
+- name: copie du template nodemanager vers VM
+  template:
+    src: nodemanager.j2
+    dest: "/etc/systemd/system/nodemanager.service"
+    owner: "root"
+    group: "root"
+    mode: 0755
+
+- name: Activation du service 
+  systemd:
+    name: nodemanager.service
+    state: started
+    enabled: yes
+    daemon_reload: yes

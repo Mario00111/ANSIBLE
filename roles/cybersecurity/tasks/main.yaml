@@ -1,0 +1,112 @@
+- name: Check cyberwatch-agent
+  stat:
+    path: /var/log/cyberwatch-agent
+  register: cyberwatch_exist_before
+  tags: 
+      - check_install
+
+# - name: Persistance var cyber
+#   set_fact:
+#     cybw_status: "{{ true if cyberwatch_exist.stat.exists == '0' else false }}"
+- name: Chech process s1
+  shell: |
+        ps -ef |  grep s1
+  register: process_s1_before
+  tags: 
+      - check_install
+
+- name: Include task DEB cw
+  include_role:
+    name: cybersecurity
+    tasks_from: cyberDEBconf.yaml
+  when:
+    - '"Deb" in ansible_distribution and not cyberwatch_exist_before.stat.exists'
+  tags: 
+      - InstallCBDB
+
+
+- name: Include task RHEL cw
+  include_role:
+    name: cybersecurity
+    
+    tasks_from: cyberRHEconf.yaml
+  when:
+    - '"RedHat" in ansible_distribution and not cyberwatch_exist_before.stat.exists'
+  tags: 
+      - InstallCBRH
+
+- name: Include task DEB s1
+  include_role:
+    name: cybersecurity
+    tasks_from: s1DEBconf.yaml
+  when:
+    - '"Deb" in ansible_distribution and process_s1_before.rc > 0'
+  tags: 
+      - InstallCBDB
+
+- name: Include task RHEL s1
+  include_role:
+    name: cybersecurity
+    tasks_from: s1RHEconf.yaml
+  when:
+    - '"RedHat" in ansible_distribution and process_s1_before.rc > 0'
+  tags: 
+      - InstallCBRH
+
+- name: Check cyberwatch-agent apres install
+  stat:
+    path: /var/log/cyberwatch-agent
+  register: cyberwatch_exist_after
+  tags: 
+      - check_install_after
+
+# - name: Persistance var cyber
+#   set_fact:
+#     cybw_status: "{{ true if cyberwatch_exist.stat.exists == '0' else false }}"
+
+- name: Persistance var datetime
+  set_fact:
+      date_file: "{{ ansible_date_time.iso8601_basic_short}}"
+
+- name: Ecriture List cyberwatch-agent apres install
+  local_action: shell echo "Host {{ inventory_hostname }}; CW status {{ cyberwatch_exist_after.stat.exists }} " >> /home/ansible/logs/cybertools/extract_cw_deploy_{{ date_file }}.txt
+  tags: 
+      - check_install_after
+
+- name: Chech process s1 apres install
+  shell: |
+        ps -ef |  grep s1
+  register: process_s1_after
+  tags: 
+      - check_install_after
+
+- name: Persistance var cyber apres install
+  set_fact:
+    s1_status: "{{ 'true' if process_s1_after.rc == 0 else 'false' }}"
+  tags: 
+      - check_install_after
+
+- name: Ecriture List s1 dans fichier
+  local_action: shell echo "Host {{ inventory_hostname }}; S1 status {{ s1_status }}" >> /home/ansible/logs/cybertools/extract_s1_deploy_{{ date_file }}.txt
+  tags: 
+      - check_install_after
+
+- name: Send e-mail si maj
+  mail:
+    host: mailsmtp.cpr.local
+    port: 25
+    from: 'tot-admin@ansible.fr'
+    to: 'romaric.paoli@cprpf.fr'
+    cc: ''
+    #to: 'romaric.paoli@cprpf.fr'
+    attach:
+      - /home/ansible/logs/cybertools/extract_s1_deploy_{{ date_file }}.txt
+      - /home/ansible/logs/cybertools/extract_cw_deploy_{{ date_file }}.txt
+    subject: '[System] Ansible-report : Nouvelle(s) VM(s) deployee(s) :  {{ inventory_hostname }}'
+    subtype: html
+    body: |
+        <p>Bonjour,</p>
+        <p>En pièces jointes la ou les vm(s) cible(s) {{ inventory_hostname }} env: {{ environnement }} où les composants : Sentinel one, Cyberwatch centreon ont été installés </p>
+        <p><Oo></p>
+  run_once: true
+  delegate_to: localhost

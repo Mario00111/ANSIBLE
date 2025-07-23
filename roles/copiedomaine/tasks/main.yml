@@ -1,0 +1,29 @@
+# Copie du domaine.gz vers autre VM
+
+- name: copie gz vers VM
+  copy:
+   src: "domain.gz"
+   dest: "{{ folder_domains }}"
+   owner: "{{ user_oracle }}"
+   group: "{{ group_oracle }}"
+   mode: 0755
+
+- name: decmpression domaine
+  unarchive:
+    src: "{{ folder_domains }}/domain.gz"
+    dest: "{{ folder_domains }}"
+    copy: no
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"
+
+- name: Suppression domain.gz
+  file: path={{ folder_domains }}/domain.gz state=absent
+
+- name: correction listen address nodemanager
+  lineinfile:
+    path: "{{ folder_domain }}/nodemanager/nodemanager.properties"
+    backup: yes
+    regexp: '^ListenAddress=devowsans1'
+    line: "ListenAddress={{ inventory_hostname.split('.')[0] }}"
+    owner: "{{ user_oracle }}"
+    group: "{{ group_oracle }}"

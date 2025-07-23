@@ -1,0 +1,13 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR EPP ##########################
+# Application attributes de Espace Personnel
+tag: "EPP"
+name: "Espace Personnel"
+domaine: "DSIO-RA"
+composant: "Liferay Portal"
+techno: "Liferay Portal"
+desc: "L'espace personnel est le portail dédié aux individus (personnels SNCF, ayant-droits) affiliés aux régimes maladie et vieillesse."

@@ -1,0 +1,133 @@
+###############################################################################
+#####################     FICHIER PARAMETRES ALL          #####################
+###############################################################################
+
+# user
+group_oracle: 'oinstall'
+user_oracle: 'oracle'
+
+# repertoire
+folder_domains: '/u01/domains'
+folder_domain: "{{ folder_domains }}/{{ inventory_hostname.split('.')[0] }}_domain"
+folder_install: '/u01/install'
+folder_patch: '/u01/install/patch_WLS'
+folder_scripts: '/u01/scripts'
+folder_tmp: '/u01/tmp'
+folder_config: "{{ folder_domains }}/config"
+folder_oracle: '/SOFT/oracle'
+
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+
+folder_sas_Application : '/datas/Sas_Livrables/Sas_Application'
+folder_sas_Lib : '/datas/Sas_Livrables/Sas_Lib'
+folder_sas_Properties : '/datas/Sas_Livrables/Sas_Properties'
+folder_sas_RessourceAdapter : '/datas/Sas_Livrables/Sas_RessourceAdapter'
+folder_sas_ShareLib : '/datas/Sas_Livrables/Sas_ShareLib'
+
+# Stockage local des livrables
+# appel dans domaine_AUtoDeploy_P2_EP folder_local_app : "/datas/Livrables/{{ inventory_hostname.split('.')[0] }}/app"
+folder_local_data : "/datas/Livrables/{{ inventory_hostname.split('.')[0] }}/data"
+folder_local_lib : "/datas/Livrables/{{ inventory_hostname.split('.')[0] }}/lib"
+folder_local_properties : "/datas/Livrables/{{ inventory_hostname.split('.')[0] }}/properties"
+folder_local_properties_sa : "/datas/Livrables/{{ inventory_hostname.split('.')[0] }}/properties"
+folder_local_ressourceadapter : "/datas/Livrables/{{ inventory_hostname.split('.')[0] }}/ressourceadapter"
+folder_local_www : "/datas/Livrables/{{ inventory_hostname.split('.')[0] }}/www"
+
+# Env extrat
+env_working : "{{ name_host[:-3] }}"
+env_court : "{{ dnsname[-3:] }}"
+env_long : "{{ env_map[env_court] }}"
+dns_parts: "{{ dnsname.split('-') }}"
+vars_lower: "{{ dns_parts[1] }}"
+vars_upper: "{{ vars_map[vars_lower] }}"
+
+
+
+# Tableau croisé des environnements
+env_map:
+  dev: "dev"
+  int: "integration"
+  qua: "qualification"
+  pro: "production"
+  pre: "preproduction"
+  poc: "poc"
+
+vars_map:
+  apps: "APPS.yml"
+  bdc: "BDC.yml"
+  ldap: "LDAP.yml"
+  bpu: "BPU.yml"
+  cor: "COR.yml"
+  dvs: "DVS.yml"
+  eni: "ENI.yml" 
+  enim: "ENIM.yml"
+  epp: "EPP.yml"
+  hra: "HRA.yml"
+  rfd: "RFD.yml"
+  rgu: "RGU.yml"
+  rit: "RIT.yml"
+  saj: "SAJ.yml"
+  sit: "SIT.yml"
+  sys: "SYS.yml"
+  trc: "TRC.yml"
+  apx: "APX.yml"
+
+
+# Network
+dnsname : "{{ inventory_dnsname.split('.')[0] }}"
+name_host : "{{ inventory_hostname.split('.')[0] }}"
+tunnel_secure : "secure{{ name_host[:-3] }}"
+
+#Version Weblo
+folder_middleware_home: '/SOFT/oracle/wls_122130'
+#folder_middleware_home: '/SOFT/oracle/wls_121300'
+
+## Version WL ##
+version_weblogic: 'fmw_12.2.1.3.0_wls.jar'
+#version_weblogic: 'fmw_12.1.3.0.0_wls.jar'
+
+## Version JDK ##
+#version_jdk: 'jdk-8u201-linux-x64.tar.gz'
+#version_jdk_short: 'jdk1.8.0_201'
+
+## Patch ##
+last_patch_set_update: 'p29633448_121300_Generic.zip'
+last_patch_samples: 'p29663844_121300_Generic.zip'
+
+# Variable pour le deploy
+name_DF: 'mobilite'
+#name_DF: 'RefDoc'
+name_SC: 'ManagedServer_1'
+
+# Mdp 
+#devows1_ows1_tma_passwd: "{{ vault_devows1tma_passwd }}"
+#devows1_passwd: "{{ vault_devows1__passwd }}"
+#recows1__passwd: "{{ vault_recows1__passwd }}"
+#quaows1__passwd: "{{ vault_quaows1__passwd }}"
+#prodows1__passwd: "{{ vault_prodows1__passwd }}"
+
+## SSL ##
+private_key_password: 'cprp13'
+private_cacerts_password: 'changeit'
+file_ssl_pem: "{{ folder_domain }}/certif_{{ name_host }}.pem"
+file_ssl_csr: "{{ folder_domain }}/certif_{{ name_host }}.csr"
+file_ssl_crt: "{{ folder_domain }}/certif_{{ name_host }}.crt"
+file_ssl_pfx: "{{ folder_domain }}/certif_{{ name_host }}.pfx"
+file_ssl_p12: "{{ folder_domain }}/keystore_{{ name_host }}.p12"
+file_ssl_jks: "{{ folder_domain }}/server_{{ name_host }}.jks"
+file_ssl_cacerts: "{{ folder_oracle }}/java_current/jre/lib/security/cacerts"
+
+## Apache ##
+folder_conf: "/etc/httpd/conf"
+folder_confd: "/etc/httpd/conf.d"
+folder_ext: "ext.cprpsncf.fr"
+folder_secure: "securequa.cprpsncf.fr"
+folder_www: "www.cprpsncf.fr"
+folder_var_www: "/var/www"
+folder_modules: "/etc/httpd/modules"
+folder_EP_tmp: "/home/espace_personnel/tmpCas"
+
+

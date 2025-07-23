@@ -1,0 +1,28 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR DECOMPTE ##########################
+# Application attributes de DECOMPTE
+tag: "DECOMPTE"
+name: "DECOMPTE"
+domaine: "DSIO-M"
+composant: "Decompte_IHM"
+techno: "JAVA"
+desc: "Cette application permet de générer les décomptes maladie à destination des affiliés et des professionnels de santé."
+
+# repertoire des logs de l'application DECOMPTE - FluentBit
+log_dir:
+  application_input_1:
+    path: /usr/local/jonas/logs/client_acquisition.log
+    tag: DEC
+    parser: java
+  application_input_2:
+    path: /usr/local/jonas/logs/decomptes.log
+    tag: DEC
+    parser: java
+  application_input_3:
+    path: /usr/local/jonas/logs/acquisition.log
+    tag: DEC
+    parser: java

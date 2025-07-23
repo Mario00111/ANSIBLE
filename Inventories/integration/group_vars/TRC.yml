@@ -1,0 +1,21 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR trecc ##########################
+# Application attributes de Relevé d'Individu Transverse
+tag: "trecc"
+name: "trecc"
+domaine: "DSIO-RA"
+composant: "trecc_WL"
+techno: "Java"
+desc: "Application TRECC"
+
+
+# VLAN
+
+
+
+# Notes: 
+#  - les variables du collecteur Fluentbit sont partagées dans JS_BPU et WL_TRC (mutualisée)

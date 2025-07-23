@@ -1,0 +1,78 @@
+###############################################################################
+#####################     FICHIER PARAMETRES DEVOPS PROD  #####################
+###############################################################################
+# Systeme var
+ram_var: '4096'
+cpu_var: '2'
+
+vm_disk_1_gb: 175
+vm_disk_1_scsi_unit: 1
+
+# VLAN
+subnet: 'NET-APPS-INT'
+
+# VG / LV Config
+vg_name_1: 'vg-custom'
+lv_name_1: 'datas'
+lv_size_1: '100g'
+mount_name_1: '/datas'
+
+lv_name_2: 'applications'
+lv_size_2: '25g'
+mount_name_2: '/applications'
+
+lv_name_3: 'exploit'
+lv_size_3: '25g'
+mount_name_3: '/exploit'
+
+# Hraccess var
+user1: expldu
+user1_comment: 'User exploit'
+user1_id: 1112
+group1_name: exploit
+group1_id: 1113
+user1_password: exploit
+
+user2: oracle
+user2_comment: 'User Oracle'
+user2_id: 1504
+group2_name: oinstall
+group2_id: 1504
+user2_password: 0racle24!
+
+group3_name: dba
+group3_id: 1505
+
+# Vmware custom attributes
+custom_1_name: "Contact metier"
+custom_1_value: "francois.chiausa@cprpf.fr"
+custom_2_name: "Plage de maintenance"
+custom_2_value: "12/24h"
+
+# Tags attributes
+tag_app: "SIDR"
+tag_env: "INT"
+tag_midd: "SI"
+
+# repertoire
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+
+folder_oracle: /applications/oracle'
+
+folder_sas_Application : '/datas/Sas_Livrables/Sas_Application'
+folder_sas_Lib : '/datas/Sas_Livrables/Sas_Lib'
+folder_sas_Properties : '/datas/Sas_Livrables/Sas_Properties'
+folder_sas_RessourceAdapter : '/datas/Sas_Livrables/Sas_RessourceAdapter'
+folder_sas_ShareLib : '/datas/Sas_Livrables/Sas_ShareLib'
+
+folder_local_oracle : "/datas/Livrables/oracle"
+
+# Env extrat
+env_working : "{{ name_host[:-3] }}"
+
+# Network
+name_host : "{{ inventory_hostname.split('.')[0] }}"
+

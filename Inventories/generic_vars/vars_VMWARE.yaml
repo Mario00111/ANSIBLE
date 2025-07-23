@@ -1,0 +1,49 @@
+###############################################################################
+#####################     FICHIER PARAMETRES VMWARE       #####################
+###############################################################################
+
+#################################
+##  Cluster WMVARE vcenter ALL ##
+#################################
+vmware_hostname: "vcenter65.cpr.sncf.fr"
+vmware_user: 8542@CPR.SNCF.FR
+vmware_pass: nSl221221*
+vmware_datacenter: "DC-CPR"
+wmware_esx_ip: 192.168.169.84
+#datastore: DS_CLUSTER_VNX5500_NONPROD_004
+vmware_folder: "/vm"
+
+# Template 
+#vmware_template: RHEL62_64__BASE-20Go_ANSIBLE
+#vmware_template: RHEL72-64_BASE-30G_DATA-20G_ANSIBLE
+#vmware_template: RHEL78-64_BASE-30G_DATA-20G_ANSIBLE
+#vmware_template: RHEL82-64_BASE-30G_DATA-40G_ANSIBLE
+vmware_template: RHEL82-64_BASE-30G_DATA-40G_TOMCAT
+
+#################################
+########### Network #############
+#################################
+# network SRV-PROD/SRV_PROD167/SRV-NONPROD/SRV-NONPROD80/Production/Interne..
+network_type: SRV-NONPROD
+# netmask plage 192.X.X.X
+cpr_netmask: 255.255.255.0
+# netmask plage 126.X.X.X
+#cpr_netmask: 255.0.0.0
+
+# gateway plage 192.X.X.X 192.168.167.254 192.168.168.254
+cpr_gateway: 192.168.168.254
+# gateway plage 126.X.X.X
+#cpr_gateway: 126.51.71.91
+
+# domain
+cpr_domain: cpr.sncf.fr
+# dns (old 126.51.81.54/126.51.81.56 )
+cpr_dns_servers1: 192.168.169.10
+cpr_dns_servers2: 192.168.169.11
+
+#################################
+########### Hardware#############
+#################################
+#disk_size: 
+#vm_memory:
+

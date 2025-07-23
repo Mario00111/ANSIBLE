@@ -1,0 +1,14 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR TME ##########################
+# Application attributes de Base des Cotisants
+tag: TME
+name: TME_SERVEUR
+domaine: TME_OPS
+composant: TME_SERVER_OPS
+techno: tomcat
+serveur_type: tomcat
+desc: TEST

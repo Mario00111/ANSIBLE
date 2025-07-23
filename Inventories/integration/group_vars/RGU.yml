@@ -1,0 +1,17 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR RGCU ##########################
+# Application attributes RGCU
+tag: "RGCU"
+name: "RGCU"
+domaine: "DSIO-RA"
+composant: "RGCU_WL"
+techno: "Java"
+desc: "Application RGCU"
+
+# Notes: 
+#  - les variables du collecteur Fluentbit sont partagées dans JS_BPU et WL_TRC (mutualisée)
+# VLAN

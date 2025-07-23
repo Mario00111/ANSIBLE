@@ -1,0 +1,39 @@
+# Attention VM Mutualisé TREC, BPU, RGU
+# configuraton ci-dessous doit être repliquer sur les autres groups vars
+# repertoire des logs de l'application BPU - FluentBit
+log_dir:
+  application_input_1:
+    path: /datas/cprjms/logs/TopicSubscriberViaJMS.log
+    tag: CPRJMS
+    parser: java
+    name: CPRJMS
+    domaine: DSIO-RA
+    composant: CPRJMS
+    desc: Application CPRJMS
+# repertoire des logs de l'application RGCU - FluentBit
+  application_input_2:
+    path: /datas/rgcu/logs/rgcu.log
+    tag: RGCU
+    parser: java
+    name: RGCU
+    domaine: DSIO-V
+    composant: RGCU_WL
+    desc: Application RGCU
+# repertoire des logs de l'application TRECC - FluentBit
+  application_input_3:
+    path: /datas/TRECC/LOG/BATCH/trecc.log
+    tag: TRECC_batch
+    parser: java
+    name: TRECC
+    domaine: DSIO-RA
+    composant: TRECC_batch
+    desc: Application TRECC
+  application_input_4: 
+    path: /datas/TRECC/LOG/SUPERVISOR/TRECC_SUP.log
+    tag: TRECC_supervisor
+    parser: java
+    name: TRECC
+    domaine: DSIO-RA
+    composant: TRECC_supervisor
+    desc: Application TRECC
+# VLAN

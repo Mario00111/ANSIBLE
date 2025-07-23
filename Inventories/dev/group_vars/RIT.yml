@@ -1,0 +1,13 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR RIT ##########################
+# Application attributes de Relevé d'Individu Transverse
+tag: "RIT"
+name: "Relevé d'Individu Transverse"
+domaine: "DSIO-RA"
+composant: "Oracle Java,Oracle Weblogic"
+techno: "Oracle Java,Oracle Weblogic"
+desc: "Le Référentiel Individus Transverse (RIT) constitue le référentiel maître des affiliés des régimes maladie / vieillesse de la CPR"

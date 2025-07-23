@@ -1,0 +1,78 @@
+# Fichier parametres ansible
+
+# user
+group_oracle: 'oinstall'
+user_oracle: 'oracle'
+
+
+# repertoire
+folder_domains: '/u01/domains'
+folder_domain: "{{ folder_domains }}/{{ inventory_hostname.split('.')[0] }}_domain"
+folder_install: '/u01/install'
+folder_patch: '/u01/install/patch_WLS'
+folder_scripts: '/u01/scripts'
+folder_tmp: '/u01/tmp'
+folder_oracle: '/SOFT/oracle'
+
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+
+folder_sas_Application : '/datas/Sas_Livrables/Sas_Application'
+folder_sas_Lib : '/datas/Sas_Livrables/Sas_Lib'
+folder_sas_Properties : '/datas/Sas_Livrables/Sas_Properties'
+folder_sas_RessourceAdapter : '/datas/Sas_Livrables/Sas_RessourceAdapter'
+folder_sas_ShareLib : '/datas/Sas_Livrables/Sas_ShareLib'
+
+#Short name host
+
+name_host : "{{ inventory_hostname.split('.')[0] }}"
+
+#Version Weblo
+folder_middleware_home: '/SOFT/oracle/wls_121300'
+
+################# livrable #############################
+####### Var EP   ######
+## Version WL ##
+version_weblogic_ep: 'fmw_12.1.3.0.0_wls.jar'
+
+## Version JDK ##
+version_jdk_ep: 'jdk-8u201-linux-x64.tar.gz'
+version_jdk_short_ep: 'jdk1.8.0_201'
+
+## Var DB ##
+folder_dba_tools : '/appsfs/APPSTEST/HOME/oratme01/tools_Ansible'
+dba_user : 'CPR2QUA'
+dba_pwd : 'CPREP13'
+
+#### FIN EP   #####
+
+version_weblogic: 'fmw_12.1.3.0.0_wls.jar'
+
+version_soa: 'fmw_12.2.1.3.0_soa.jar'
+
+version_osb: 'fmw_12.2.1.3.0_osb.jar'
+
+version_jdk: 'jdk-8u201-linux-x64.tar.gz'
+version_jdk_short: 'jdk1.8.0_201'
+#version_jdk: 'jdk-8u181-linux-x64.tar.gz'
+#version_jdk_short: 'jdk1.8.0_181'
+
+# Variable RCU
+rcu_url: 'jdbc:oracle:thin:@oda-s02a-1.cpr.sncf.fr:1521:CPR2DEV'
+rcu_pwd: 'DevBsa1'
+rcu_sys_pwd: 'Ops572401'
+rcu_prefix: 'BSA1'
+
+
+# Variable pour le deploy
+name_DF: 'RIT_CPRJMS'
+name_SC: 'ManagedServer_1'
+
+# Mdp 
+#devows1_ows1_tma_passwd: "{{ vault_devows1tma_passwd }}"
+#devows1_passwd: "{{ vault_devows1__passwd }}"
+#recows1__passwd: "{{ vault_recows1__passwd }}"
+#quaows1__passwd: "{{ vault_quaows1__passwd }}"
+#prodows1__passwd: "{{ vault_prodows1__passwd }}"

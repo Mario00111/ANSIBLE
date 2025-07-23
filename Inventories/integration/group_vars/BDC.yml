@@ -1,0 +1,24 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR BDC ##########################
+# Application attributes de Base des Cotisants
+tag: "BDC"
+name: "Base des Cotisants"
+domaine: "DSIO-V"
+composant: "JEE"
+techno: "JEE"
+desc: "La BDC (Base des Cotisants) est un référentiel qui doit permettre de répondre aux nouveaux besoins de gestion de la population des cotisants. Il ne remplace donc pas le référentiel BDV existant mais complète le domaine d'intervention du gestionnaire.La BDC regroupe toutes les informations nécessaires à la constitution d'un relevé de compte de  retraite SNCF individuel.Elle contient les populations suivantes"
+
+# repertoire des logs de l'application BDC - FluentBit
+log_dir:
+  application_input_1:
+    path: /usr/local/jonas/logs/bdc_web.log
+    tag: BDC
+    parser: java
+  application_input_2:
+    path: /usr/local/jonas/logs/bdc_rmi.log
+    tag: BDC
+    parser: java

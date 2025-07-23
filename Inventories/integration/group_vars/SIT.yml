@@ -1,0 +1,45 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR SIT ##########################
+# Application attributes de Site Institutionnel
+tag: "SIT"
+name: "Site Institutionnel"
+domaine: "DSIO-RA"
+composant: "SIT_tomcat"
+techno: "tomcat"
+desc: "Application Site Institutionnel CPR"
+
+# repertoire des logs de SIT - FluentBit
+log_dir:
+  application_input_1: 
+    path: /home/tomcat/SOFT/dev/siteinstit-restapi/logs/*.log
+    tag: SIT
+    parser: java
+    name: "SiteInstitutionnel"
+    domaine: "DSIO-RA"
+    composant: "SIT_tomcat"
+    techno: "tomcat"
+    desc: "Application Site Institutionnel CPR"
+# Attention VM mutualisées avec la preprod et prod pour les logs    
+  application_input_2: 
+    path: /home/tomcat/SOFT/preprod/siteinstit-restapi/logs/*.log
+    tag: SIT
+    parser: java
+    name: "SiteInstitutionnel"
+    domaine: "DSIO-RA"
+    composant: "SIT_tomcat"
+    techno: "tomcat"
+    desc: "Application Site Institutionnel CPR"
+  application_input_3: 
+    path: /home/tomcat/SOFT/prod/siteinstit-restapi/logs/*.log
+    tag: SIT
+    parser: java
+    name: "SiteInstitutionnel"
+    domaine: "DSIO-RA"
+    composant: "SIT_tomcat"
+    techno: "tomcat"
+    desc: "Application Site Institutionnel CPR"
+# VLAN

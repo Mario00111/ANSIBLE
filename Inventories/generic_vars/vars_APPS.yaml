@@ -1,0 +1,59 @@
+###############################################################################
+#######################   FICHIER PARAMETRES APPS  ############################
+###############################################################################
+
+# Variables docker pour les applications
+docker_app_limit_memory_j2ee: 2048M
+docker_app_restart_mode: unless-stopped
+
+docker_network_traefik: traefik_network
+
+# Variables pour les certificats
+certificat_path: /mnt/data/ssl
+certificat_crt: wildcard.cpr.local.crt
+certificat_key: wildcard.cpr.local.key
+
+# Variables génériques applicatives
+app_dir_home: '/home/ansible/apps/{{ name | lower }}'
+app_dir_configuration: '{{ app_dir_home }}/conf'
+app_dir_artifacts : '{{ app_dir_home }}/artifacts'
+app_dir_lib : '{{ app_dir_home }}/lib'
+app_dir_logs: '/mnt/logs/{{ name | upper }}'
+app_dir_tmp: '/mnt/tmp/{{ name | upper }}'
+
+# Variables génériques pour les batchs
+batch_dir_exploit: '/datas/{{ tag | upper }}/exploit'
+batch_dir_datas: '/datas/{{ tag }}'
+batch_dir_datas_list: {}
+batch_dir_owner: exploit
+batch_dir_group: exploit
+
+
+# Variables génériques pour le ldap
+jcifs_http_domainController: svc-ldap.cpr.local
+jcifs_smb_client_domain: SERVEURS
+jcifs_smb_client_username: reqldap
+jcifs_smb_client_password: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  31646561386635623539353834633835316530633063626236353935363439646434343432363639
+  6134396239336436376563333836313066653664363431370a373339396464346166643961616339
+  32623136633461616538616263666365353533653563303234383433313431353937313561373036
+  3361376232646362380a633636353432366435653431643539666335343636323436313664333264
+  6631
+jcifs_smb_client_activeAuth: true
+jcifs_smb_lmCompatibility: 3
+jcifs_util_loglevel: 10
+jcifs_netbios_wins: 126.51.101.160
+
+ldap_url: ldap://svc-ldap.cpr.local:389
+
+# Bastion
+bastion_host_ip: 192.168.82.10,192.168.82.11,192.168.82.12,192.168.82.13,192.168.82.14,192.168.82.15
+
+# Configuration GH MSA
+gh_interops_client_id: interops
+gh_prefixe_badge: R04
+gh_code_appli_cpr: HABCPR
+
+# GCOS
+gcos_adress_ip: 126.51.102.51

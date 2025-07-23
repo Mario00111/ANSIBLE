@@ -1,0 +1,20 @@
+###############################################################################
+#######################   FICHIER PARAMETRES HARBOR  ##########################
+###############################################################################
+
+# Harbor variables
+nexus_username: snapshots-deployer
+nexus_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          39376332623536366166616432643964363264636139303735626332323739383838613834663430
+          3032343963343466316634393563663930373265356265380a663065396362633036396634393739
+          33633065386262383862396234356431313335636266623437333264613834333466323431363737
+          3233396130643138660a616634333136383337616364643836333331613436316466323733336265
+          33366236626565373437333738303835306530633964613131366566656531633633
+
+nexus_host: 'http://nexus.cpr.local:8081'
+
+nexus_url_snapshot: '{{ nexus_host }}/repository/maven-snapshots/'
+nexus_url_release: '{{ nexus_host }}/repository/maven-releases/'
+nexus_url_central: '{{ nexus_host }}/repository/maven-central/'
+nexus_url_public: '{{ nexus_host }}/repository/maven-public/'

@@ -1,0 +1,43 @@
+###############################################################################
+#####################     FICHIER PARAMETRES VMWARE       #####################
+###############################################################################
+
+#################################
+##  Cluster WMVARE vcenter ALL ##
+#################################
+vmware_hostname: "supervision-vcenter.cpr.sncf.fr"
+vmware_user: ANSIBLE@VSPHERE.LOCAL
+vmware_pass: Hj4AZZ2cPs@
+vmware_datacenter: "SupervisionCluster"
+wmware_esx_ip: 126.51.108.26
+datastore: Volume raid5 5 400gb
+vmware_folder: "/vm"
+
+# Template 
+vmware_template: RHEL82-64_BASE-30G_DATA-40G_ANSIBLE
+#vmware_template: RHEL82-64_BASE-30G_DATA-40G_ANSIBLE_WEBLO
+
+#################################
+########### Network #############
+#################################
+# network SRV-PROD/Production/Interne..
+network_type: SRV-NONPROD
+# netmask plage 192.X.X.X
+cpr_netmask: 255.255.255.0
+# netmask plage 126.X.X.X
+#cpr_netmask: 255.0.0.0
+
+# gateway plage 192.X.X.X
+cpr_gateway: 192.168.168.254
+# domain
+cpr_domain: cpr.sncf.fr
+# dns
+cpr_dns_servers1: 126.51.81.54
+cpr_dns_servers2: 126.51.81.56
+
+#################################
+########### Hardware#############
+#################################
+#disk_size: 
+#vm_memory:
+

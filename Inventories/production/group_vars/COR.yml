@@ -1,0 +1,23 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR BPU ##########################
+# Application attributes de BPU
+tag: "Passeport"
+name: "Batch_Passeport"
+domaine: "DSIO-RA"
+composant: "Batch_Passeport"
+techno: "Batch"
+desc: "application Batch_Passeport"
+
+# Attention VM Mutualisé TREC, BPU, RGU
+# configuraton ci-dessous doit être repliquer sur les autres groups vars
+# repertoire des logs de l'application BPU - FluentBit
+log_dir:
+  application_input_1:
+    path: /exploit/prod/X/M/CBF/batchPassport/log/batch-passeport.log
+    tag: Batch_Passeport
+    parser: java
+# VLAN

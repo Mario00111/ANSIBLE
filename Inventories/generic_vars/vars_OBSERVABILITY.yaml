@@ -1,0 +1,14 @@
+###############################################################################
+#####################   FICHIER PARAMETRES OBSERVABILITY  #####################
+###############################################################################
+
+observability_host: sd-mgmt-dk02.cpr.local
+observability_host_ip: 192.168.124.5
+
+observability_otelcol: "sd-mgmt-dk02.cpr.local:8006"
+observability_loki: "http://sd-mgmt-dk02.cpr.local:3500"
+observability_traces: "http://sd-mgmt-dk02.cpr.local:4317"
+observability_grpc: "sd-mgmt-dk02.cpr.local:4317"
+
+# Logs
+observability_logs_labels_regex: "^(composant|environnement|domain|app|server|service_name|deployment.environment.name)"

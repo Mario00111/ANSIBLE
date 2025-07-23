@@ -1,0 +1,56 @@
+###############################################################################
+#####################     FICHIER PARAMETRES VMWARE       #####################
+###############################################################################
+
+#################################
+##  Cluster WMVARE vcenter ALL ##
+#################################
+vmware_hostname: "vcenter65.cpr.sncf.fr"
+vmware_user: ansible@vsphere.local
+vmware_pass: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          30616532396336666339613063613139663434386464306539323632326131633834616262386637
+          3839323461346533313965373061396439653261393936380a663239376666383138623830613739
+          36623939636536333334666138616531646564313364343265663263306331646536393363356432
+          6564353663653235310a326139356462393632636637633338386433333562656131306462363564
+          37303532363738353038353364663231626466646237663939656566393733306233
+vmware_datacenter: "DC-CPR"
+wmware_esx_ip: 192.168.169.84
+#datastore: DS_CLUSTER_VNX5500_NONPROD_004
+vmware_folder: "/vm"
+
+# Template 
+#vmware_template: RHEL62_64__BASE-20Go_ANSIBLE
+#vmware_template: RHEL72-64_BASE-30G_DATA-20G_ANSIBLE
+vmware_template_RHE7: RHEL78-64_BASE-30G_DATA-20G_ANSIBLE
+#vmware_template: RHEL82-64_BASE-30G_DATA-40G_ANSIBLE
+#vmware_template: RHEL82-64_BASE-30G_DATA-40G_TOMCAT
+#vmware_template: RHEL83_BASE-30G_DATA-50G
+#vmware_template_RHE8: 
+#vmware_template_RHE9:
+
+
+vmware_template_RHE9: TPL-CPR-RHEL9
+vmware_template_RHE8: TPL-CPR-RHEL8
+vmware_template_DEB11: TPL-CPR-DEBIAN11-v2
+vmware_template_DEB12: TPL-CPR-DEBIAN12-NO-DISK
+
+vmware_template: "{{ vmware_template_RHE7 if os == 'RHE7' else vmware_template_RHE8 if os == 'RHE8' else vmware_template_RHE9 if os == 'RHE9' else vmware_template_DEB11 if os == 'DEB11' else vmware_template_DEB12 if os == 'DEB12' }}"
+#vmware_template: TPL-CPR-DEBIAN11-v2
+
+#################################
+########### Hardware#############
+#################################
+vm_disk_type: "thick"
+vm_disk_datastore: "DS_A20_ANSIBLE"
+vm_disk_scsi_controller: 1
+vm_disk_scsi_type: 'paravirtual'
+vm_disk_mode: 'persistent'
+
+## Taille disque a definir dans group_vars .yml
+#vm_disk_1_gb: 100
+#vm_disk_1_scsi_unit: 1
+
+#vm_disk_2_gb: 100
+#vm_disk_2_scsi_unit: 2
+

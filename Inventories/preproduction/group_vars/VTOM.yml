@@ -1,0 +1,52 @@
+
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR VTOM ##########################
+# Application attributes de VTOM
+tag: "Vtom"
+name: "Vtom"
+domaine: "DSIO-TO"
+composant: "traces"
+techno: "vtom"
+desc: "VTOM scheduler."
+
+# liste des traces logs VTOM
+Vtom_log_files:
+  - AIS
+  - BDC
+  - FLUXSNCF
+  - GIP
+  - INETJ
+  - INFOCENTRE
+  - INTEREGIME
+  - INTERFACES
+  - MOSECOSO
+  - PASRAU
+  - PASRAUV2
+  - PEB
+  - PFTFM
+  - PIRAT
+  - SINERGI
+  - TELEPHONIE
+  - TME
+  - TRESORERIE
+  - bdaemon
+  - vtmonitor
+  - vtserver
+
+# repertoire des logs de l'application VTOM - FluentBit
+log_dir:
+  application_input_1: 
+    path: /mnt/vtom/traces/*
+    tag: Vtom
+    parser: java
+  application_input_vtom_err: 
+    path: /mnt/data/vtom/logs/*
+    tag: Vtom
+    parser: java
+  server_input_1: 
+    path: /mnt/vtom/serveurs.log
+    tag: Vtom
+    parser: java

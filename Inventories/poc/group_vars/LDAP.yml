@@ -1,0 +1,49 @@
+ram_var: '8192'
+cpu_var: '2'
+
+
+subnet: NET-APPS-POC
+
+vm_disk_1_gb: 100
+vm_disk_1_scsi_unit: 1
+# Configuration des volumes logiques pour LDAP
+
+vg_name_1: "vg-mid"
+
+lv_name_1: "opt"
+lv_size_1: "10G"
+mount_name_1: "/opt"
+
+lv_name_2: "datas"
+lv_size_2: "10G"
+mount_name_2: "/datas"
+
+
+vg_name_mid : 'vg-mid'
+# Vmware custom attributes
+custom_1_name: "Contact metier"
+custom_1_value: "jean-pierre.corizzi@cprpf.fr"
+custom_2_name: "Plage de maintenance"
+custom_2_value: "12/24h"
+
+
+# Tags attributes
+tag_app: "LDAP"
+tag_env: "POC"
+tag_midd: "PAM"
+
+# repertoire
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+
+# user var
+user1: hraccess
+user1_id: 1501
+user1_comment: "Utilisateur LDAP hraccess"
+user1_password: "sha512"
+group1_name: hr
+group1_id: 1501
+
+subnet: NET-APPS-INT

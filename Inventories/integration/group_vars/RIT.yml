@@ -1,0 +1,22 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR RIT ##########################
+# Application attributes de Relevé d'Individu Transverse
+tag: "RIT"
+name: "RIT"
+domaine: "DSIO-RA"
+composant: "RIT"
+
+# VLAN
+subnet: NET-APPS-INT
+
+
+# repertoire des logs de RIT - FluentBit
+log_dir:
+  application_input_1: 
+    path: /datas/rit/rit*.log
+    tag: RIT_batch
+    parser: java

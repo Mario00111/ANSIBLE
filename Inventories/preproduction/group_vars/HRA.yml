@@ -1,0 +1,71 @@
+###############################################################################
+#####################     FICHIER PARAMETRES DEVOPS PROD  #####################
+###############################################################################
+# Systeme var
+ram_var: '8192'
+cpu_var: '2'
+# VG / LV Config
+vg_name_1: 'vg-custom'
+lv_name_1: 'data'
+lv_size_1: '60g'
+mount_name_1: '/data'
+
+lv_name_2: 'applications'
+lv_size_2: '25g'
+mount_name_2: '/applications'
+
+# Hraccess var
+user1: hraccess
+user1_comment: 'User HRACCESS'
+user1_id: 1501
+group1_name: hr
+group1_id: 1501
+user1_password: Hracce$$24!
+
+user2: oracle
+user2_comment: 'User Oracle'
+user2_id: 1504
+group2_name: oinstall
+group2_id: 1504
+user2_password: 0racle24!
+
+group3_name: dba
+group3_id: 1505
+
+# Vmware custom attributes
+custom_1_name: "Contact metier"
+custom_1_value: "fabrice.gautier@cprpf.fr"
+custom_2_name: "Plage de maintenance"
+custom_2_value: "12/24h"
+
+# Tags attributes
+tag_app: "HRA"
+tag_env: "PPROD"
+tag_midd: "TC"
+
+# repertoire
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+
+folder_hra: '/applications/hraccess'
+folder_cobol: '/applications/cobol'
+folder_tomcat: '/applications/tomcat'
+folder_oracle: '/applications/oracle'
+
+folder_sas_Application : '/datas/Sas_Livrables/Sas_Application'
+folder_sas_Lib : '/datas/Sas_Livrables/Sas_Lib'
+folder_sas_Properties : '/datas/Sas_Livrables/Sas_Properties'
+folder_sas_RessourceAdapter : '/datas/Sas_Livrables/Sas_RessourceAdapter'
+folder_sas_ShareLib : '/datas/Sas_Livrables/Sas_ShareLib'
+
+folder_local_app : "/datas/Livrables/{{ tag_app }}"
+
+# Env extrat
+env_working : "{{ name_host[:-3] }}"
+
+# Network
+name_host : "{{ inventory_hostname.split('.')[0] }}"
+
+# VLAN

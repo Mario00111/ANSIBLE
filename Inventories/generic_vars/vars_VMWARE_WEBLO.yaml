@@ -1,0 +1,49 @@
+###############################################################################
+#####################     FICHIER PARAMETRES VMWARE       #####################
+###############################################################################
+
+#################################
+#  Cluster WMVARE vcenter Weblo #
+#################################
+vmware_hostname: "weblovcenter65.cpr.sncf.fr"
+vmware_user: 8542@CPR.SNCF.FR
+vmware_pass: nSl220621*
+vmware_datacenter: "DC-Weblo"
+wmware_esx_ip: 192.168.169.4
+#datastore: DS_CLUSTER_VNX5500_NONPROD_004
+vmware_folder: "/vm"
+
+# Template 
+vmware_template: RHEL78_64_PYTHON2_BASE-30G_DATA-50G
+#vmware_template: RHEL78_64__BASE-30G_DATA-50G
+#vmware_template: RHEL72_64__BASE-30G_DATA-50G_ANSIBLE
+#vm_template: RHEL72-64_BASE-30G_DATA-20G_ANSIBLE
+#vm_template: RHEL72-64_BASE-30G_DATA-20G
+
+#################################
+#### Vm a deployer          #####
+#################################
+#vm_ip: 192.168.168.167
+#vm_name: "TESTANSIBLE"
+
+#################################
+########### Network #############
+#################################
+# network SRV_PROD167/SRV-PROD/SRV-NONPROD/Production/Interne..
+network_type: SRV-NONPROD
+# netmask plage 192.X.X.X
+cpr_netmask: 255.255.255.0
+# netmask plage 126.X.X.X
+#cpr_netmask: 255.0.0.0
+
+# gateway plage 192.168.167.254/192.168.168.254
+cpr_gateway: 192.168.168.254
+# gateway plage 126.X.X.X
+#cpr_gateway: 126.51.71.91
+
+# domain
+cpr_domain: cpr.sncf.fr
+# dns
+cpr_dns_servers1: 126.51.81.54
+cpr_dns_servers2: 126.51.81.56
+

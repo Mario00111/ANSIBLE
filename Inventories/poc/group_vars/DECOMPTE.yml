@@ -1,0 +1,13 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR DECOMPTE ##########################
+# Application attributes de DECOPTE
+tag: "DECOMPTE"
+name: "DECOMPTE"
+domaine: "DSIO-M"
+composant: "COBOL/GCOS"
+techno: "COBOL/GCOS"
+desc: "Cette application permet de générer les décomptes maladie à destination des affiliés et des professionnels de santé."

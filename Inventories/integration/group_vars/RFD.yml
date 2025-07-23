@@ -1,0 +1,123 @@
+###############################################################################
+#####################     FICHIER PARAMETRES REFDOC QUA   #####################
+###############################################################################
+
+########################## VAR ORACLE ##########################
+# user
+group_oracle: 'oinstall'
+user_oracle: 'oracle'
+
+# repertoire
+folder_domains: '/u01/domains'
+folder_domain: "{{ folder_domains }}/{{ inventory_hostname.split('.')[0] }}_domain"
+folder_install: '/u01/install'
+folder_patch: '/u01/install/patch_WLS'
+folder_scripts: '/u01/scripts'
+folder_tmp: '/u01/tmp'
+folder_config: "{{ folder_domains }}/config"
+folder_oracle: '/SOFT/oracle'
+
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+
+folder_sas_Application : '/datas/Sas_Livrables/Sas_Application'
+folder_sas_Lib : '/datas/Sas_Livrables/Sas_Lib'
+folder_sas_Properties : '/datas/Sas_Livrables/Sas_Properties'
+folder_sas_RessourceAdapter : '/datas/Sas_Livrables/Sas_RessourceAdapter'
+folder_sas_ShareLib : '/datas/Sas_Livrables/Sas_ShareLib'
+
+# Stockage local des livrables
+folder_local_app : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/app"
+folder_local_data : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/data"
+folder_local_lib : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/lib"
+folder_local_properties : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/properties"
+folder_local_properties_sa : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/properties_sa"
+folder_local_ressourceadapter : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/ressourceadapter"
+########################## FIN VAR ORACLE ##########################
+
+########################## VAR JONAS ##########################
+# user
+user_jonas : "{{ env_user }}"
+group_jonas : "{{ env_user }}"
+
+folder_jonas : '/usr/local/jonas'
+folder_jonas_conf : "{{ folder_jonas }}/conf"
+folder_jonas_webapps : "{{ folder_jonas }}/webapps"
+folder_jonas_webappsauto : "{{ folder_jonas }}/webapps/autoload"
+folder_jonas_work : "{{ folder_jonas }}/work"
+
+# Stockage local des livrables jonas
+folder_local_app_js : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/appjonas"
+folder_local_properties_js : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/properties_js"
+
+########################## FIN VAR JONAS ##########################
+
+# Env extrat
+env_working : "{{ name_host[:-3] }}"
+
+# Network
+name_host : "{{ inventory_hostname.split('.')[0] }}"
+tunnel_secure : "secure{{ name_host[:-3] }}"
+
+#Version Weblo
+#folder_middleware_home: '/SOFT/oracle/wls_122130'
+folder_middleware_home: '/SOFT/oracle/wls_121300'
+
+## Version JDK ##
+version_jdk: 'jdk-8u201-linux-x64.tar.gz'
+version_jdk_short: 'jdk1.8.0_201'
+
+## Patch ##
+last_patch_set_update: 'p29633448_121300_Generic.zip'
+last_patch_samples: 'p29663844_121300_Generic.zip'
+
+# Variable Nexus
+var_group_id: 'fr.cprpsncf.refdoc'
+var_artifact_id: 'referentiel-documentaire-ear'
+#var_version : '1.1.0.1-SNAPSHOT'
+var_version: "{{ nexus_app_version }}"
+var_extension: 'ear'
+var_repository_url: "{{ nexus_url }}"
+var_username: 'gitlabTest'
+var_password: 'Cprpsncf@13'
+var_name_artifact: 'RD-WS-RefdocIhm-0.0.0.ear'
+
+# Variable pour le deploy
+name_DF: "{{ typesa_app_var[-3:] }}"
+name_SC: 'ManagedServer_1'
+
+# Variable BDD
+datasource1_name: 'REFDOC_FINAL'
+datasource1_jndi: 'jdbc/REFDOC_FINAL'
+datasource1_username: 'REFDOC_FINAL'
+datasource1_password: 'REFDOC'
+
+datasource2_name: 'REFDOC_PARAM'
+datasource2_jndi: 'jdbc/REFDOC_PARAM'
+datasource2_username: 'REFDOC_PARAM'
+datasource2_password: 'REFDOC'
+
+datasource3_name: 'REFDOC_VALID'
+datasource3_jndi: 'jdbc/REFDOC_VALID'
+datasource3_username: 'REFDOC_VALID'
+datasource3_password: 'REFDOC'
+
+datasource_all_host: 'oda-s02a-scan.cpr.sncf.fr'
+datasource_all_port: '1521'
+datasource_all_dbname: 'CPR1QUA'
+datasource_all_password: 'REFDOC'
+datasource_all_targets: 'ManagedServer_1'
+
+## SSL ##
+private_key_password: 'cprp13'
+private_cacerts_password: 'changeit'
+file_ssl_pem: "{{ folder_domain }}/certif_{{ name_host }}.pem"
+file_ssl_csr: "{{ folder_domain }}/certif_{{ name_host }}.csr"
+file_ssl_crt: "{{ folder_domain }}/certif_{{ name_host }}.crt"
+file_ssl_pfx: "{{ folder_domain }}/certif_{{ name_host }}.pfx"
+file_ssl_p12: "{{ folder_domain }}/keystore_{{ name_host }}.p12"
+file_ssl_jks: "{{ folder_domain }}/server_{{ name_host }}.jks"
+file_ssl_cacerts: "{{ folder_oracle }}/java_current/jre/lib/security/cacerts"
+# VLAN

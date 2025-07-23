@@ -1,0 +1,215 @@
+###############################################################################
+#####################     FICHIER PARAMETRES DEVOPS PROD  #####################
+###############################################################################
+# Systeme var
+ram_var: '6144'
+cpu_var: '8'
+
+vm_disk_1_gb: 200
+vm_disk_1_scsi_unit: 1
+
+vm_disk_2_gb: 1000
+vm_disk_2_scsi_unit: 2
+
+# VLAN
+subnet: 'NET-APPS-INT'
+
+# VG1 / LV Config
+vg_name_1: 'vg-applications'
+
+# lv a creer sous VG1
+lv_name_1: 'lv_editique'
+lv_size_1: '50g'
+mount_name_1: 'editique'
+
+lv_name_2: 'lv_opt'
+lv_size_2: '50g'
+mount_name_2: 'opt'
+
+# VG2 / LV Config
+vg_name_2: 'vg-datas'
+
+# lv a creer sous VG2
+lv_name_3: 'lv_datas01'
+lv_size_3: '10g'
+mount_name_3: 'datas01'
+
+lv_name_4: 'lv_datas02'
+lv_size_4: '150g'
+mount_name_4: 'datas02'
+
+lv_name_5: 'lv_exploit'
+lv_size_5: '10g'
+mount_name_5: 'exploit'
+
+lv_name_6: 'lv_geide'
+lv_size_6: '40g'
+mount_name_6: 'GEIDE'
+
+lv_name_7: 'lv_impmsa'
+lv_size_7: '5g'
+mount_name_7: 'IMPMSA'
+
+lv_name_8: 'lv_preprod'
+lv_size_8: '10g'
+mount_name_8: 'preprod'
+
+lv_name_9: 'lv_projet'
+lv_size_9: '600g'
+mount_name_9: 'projet'
+
+# user var
+user_1: edit
+group_1: edit
+password_user_1: edit
+
+user_2: exploit
+group_2: exploit
+password_user_2: exploit
+
+user3: oracle
+user3_comment: 'User Oracle'
+user3_id: 1504
+group3_name: oinstall
+group3_id: 1504
+user3_password: 0racle24!
+
+group4_name: dba
+group4_id: 1505
+
+# Vmware custom attributes
+custom_1_name: "Contact metier"
+custom_1_value: "pascal.boudas@cprpf.fr"
+custom_2_name: "Plage de maintenance"
+custom_2_value: "12/24h"
+
+# Tags attributes
+tag_app: "KSL"
+tag_env: "PROD"
+tag_midd: "TC"
+
+# repertoire
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+folder_oracle: '/opt/oracle'
+
+folder_local_app : "/datas/Livrables/oracle"
+
+ksl_cron: "/exploit/ksl/cron"
+
+# Dossier contenant les logs des cron
+ksl_cron_logs: "/datas02/logs/ksl/cron"
+
+# Dossier tmp server KSL
+ksl_server_tmp: "/editique/ksl/KSL_SERVER/tmp"
+
+# Dossier tmp projet KSL
+ksl_projet_tmp: "/projet/tmp"
+
+#  Purge des repertoires de preprod
+ksl_preprod_basedir_td: "/datas/preprod/m13/td"
+ksl_preprod_basedir_tr: "/datas/preprod/m13/tr"
+
+#  Purge des repertoires de prod
+ksl_prod_basedir_cnieg: "/datas/prod/CNIEG"
+ksl_prod_basedir_crpcen: "/datas/prod/CRPCEN"
+ksl_prod_basedir_kid_atmp_prod: "/datas/prod/Kid_ATMP_PROD"
+ksl_prod_basedir_ratp: "/datas/prod/RATP"
+ksl_prod_basedir_td: "/datas/prod/m13/td"
+ksl_prod_basedir_tr: "/datas/prod/m13/tr"
+
+# Dossier ksl server
+ksl_home: "/editique/ksl/KSL_SERVER/composer"
+clt_dir: "{{ ksl_home }}/bin"
+
+
+# Env extrat
+env_working : "{{ name_host[:-3] }}"
+
+# Network
+name_host : "{{ inventory_hostname.split('.')[0] }}"
+
+# Debut var Tomcat
+
+tomcat_state: present
+
+tomcat_version: 9.0.97
+tomcat_major_version: "{{ tomcat_version.split('.')[0].tomcat_version.split('.')[1] }}"
+
+tomcat_install_java: True
+# Modifs Naelan 27/01/25 tomcat_java_version: openjdk-11
+tomcat_java_version: openjdk-21
+tomcat_java_home: /usr/lib/jvm/java-21-openjdk-amd64
+
+tomcat_downloadURL: https://archive.apache.org/dist
+
+tomcat_user: tomcat
+tomcat_group: tomcat
+
+tomcat_install_path: /opt
+tomcat_service_name: tomcat
+tomcat_systemd_config_path: /etc/systemd/system
+tomcat_jvm_memory_xms: 512
+tomcat_jvm_memory_xmx: 4096
+
+tomcat_permissions_production: False
+tomcat_webapps_auto_deployment: True
+tomcat_permissions_ensure_on_every_run: True
+tomcat_prod_modes:
+  - ['bin', '2750','0640']
+  - ['conf','2750','0640']
+  - ['lib', '2750','0640']
+  - ['logs','0300','0640']
+  - ['temp','0750','0640']
+  - ['work','0750','0640']
+  - ['webapps','0750','0640']
+
+tomcat_allow_manager_access_only_from_localhost: False
+tomcat_allow_host_manager_access_only_from_localhost: False
+
+tomcat_debug_mode: False
+
+tomcat_listen_address: 0.0.0.0
+tomcat_port_shutdown: 8005
+tomcat_port_connector: 8080
+tomcat_port_redirect: 8443
+tomcat_port_ajp: 8009
+tomcat_port_debug: 8000
+
+tomcat_ajp_enabled: False
+tomcat_ajp_listen_address: "::1" 
+tomcat_ajp_secret: "Cprpsncf@13"
+tomcat_ajp_secret_required: True
+
+tomcat_service_enabled_on_startup: True
+
+tomcat_users: []
+
+tomcat_user_roles: []
+
+tomcat_template_manager_context: "manager-context.xml.j2"
+tomcat_template_host_manager_context: "host-manager-context.xml.j2"
+tomcat_template_systemd_service: "tomcat.service.j2"
+tomcat_template_setenv: "tomcat.setenv.sh.j2"
+tomcat_template_server: "tomcat-server-{{ '.'.join(tomcat_version.split('.')[:2]) }}.xml.j2"
+tomcat_template_users: "tomcat-users-{{ '.'.join(tomcat_version.split('.')[:2]) }}.xml.j2"
+
+tomcat_temp_download_path: /tmp/ansibletomcattempdir
+
+# Switch to true if upgrading from role release 1.3.2 or previous in order 
+# to remove /usr/lib/systemd/system/{{ tomcat_service_name }}.service
+tomcat_delete_old_systemd_service_file: False
+
+# Disconnected remote parameters
+tomcat_remote_is_disconnected:  False
+
+# Uninstall default parameters
+tomcat_uninstall_create_backup: True
+
+tomcat_uninstall_remove_user: True
+tomcat_uninstall_remove_group: True
+tomcat_uninstall_remove_java: False
+
+tomcat_uninstall_remove_all: False

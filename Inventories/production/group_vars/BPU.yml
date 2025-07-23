@@ -1,0 +1,23 @@
+---
+# #########################################################################
+# #####################  FICHIER PARAMETRES           #####################
+# #########################################################################
+
+########################## VAR BPU ##########################
+# Application attributes de BPU
+tag: "BPU"
+name: "BPU"
+domaine: "DSIO-RA"
+composant: "Oracle Java,Oracle Service bus 11g,Oracle Database 12c"
+techno: "Oracle Java,Oracle Service bus 11g,Oracle Database 12c"
+desc: "BPU signifie Base des populations unifiée et l'application BPU a pour vocation de constituer un référentiel des populations gérées par la CPR partageable par tous les systèmes d'information"
+
+# Attention VM Mutualisé TREC, BPU, RGU
+# configuraton ci-dessous doit être repliquer sur les autres groups vars
+# repertoire des logs de l'application BPU - FluentBit
+log_dir:
+  application_input_1:
+    path: /usr/local/jonas/logs/bpu-application.log
+    tag: BPU
+    parser: java
+# VLAN

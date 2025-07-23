@@ -1,0 +1,52 @@
+environnement: "DEV"
+environnement_short: "DEV"
+
+#################################
+########### Network #############
+#################################
+# network SRV-PROD/SRV_PROD167/SRV-NONPROD/SRV-NONPROD80/Production/NET-INTEROPS/NET-APPS-INT/DMZ-APPS-INT/Interne..
+#network_type: DMZ-APPS-INT
+# subnet defini dans le [DF].yml
+network_type: "{{ subnet }}"
+#network_type: NET-APPS-INT
+# netmask plage 192.X.X.X 255.255.255.0 INTEROPS/DMZ 255.255.255.192 
+cpr_netmask_DMZ: 255.255.255.192
+cpr_netmask_NET: 255.255.255.0
+cpr_netmask: "{{ cpr_netmask_NET if 'NET' in subnet else cpr_netmask_DMZ if 'DMZ' in subnet }}"
+
+# gateway plage 192.X.X.X 
+# PROD 167 => 192.168.167.254 
+# PROD 166 => 192.168.166.254
+# NON PROD 168 => 192.168.168.254
+# NET-INTEROPS => 192.168.83.62
+# NET-APPS-INT => 192.168.123.254
+# DMZ-APPS-INT => 10.4.1.193
+#cpr_gateway: 10.4.1.193
+#cpr_gateway: 192.168.123.254
+# gateway plage 126.X.X.X
+#cpr_gateway: 126.51.71.91
+cpr_gateway_DMZ: 10.4.1.193
+cpr_gateway_NET: 192.168.123.254
+cpr_gateway: "{{ cpr_gateway_NET if 'NET' in subnet else cpr_gateway_DMZ if 'DMZ' in subnet }}"
+
+# domain cpr.sncf.fr / cpr.local
+cpr_domain: "cpr.local"
+cpr_domain_all: "cpr.local cpr.sncf.fr"
+# dns (old 126.51.81.54/126.51.81.56 )
+cpr_dns_servers1: 192.168.169.10
+cpr_dns_servers2: 192.168.169.11
+
+# Systeme var ram et cpu param dans [DF].yaml
+
+# vcenter folder
+folder_vcenter: 'ENV INT'
+
+# Vmware tag attributes
+#tag_applications: {{  }}
+#tag_environnement: {{  }}
+#tag_middleware: {{  }}
+
+#tag_app_name:
+#tag_env_name:
+#tag_mid_name:
+# VLAN

@@ -1,0 +1,25 @@
+###############################################################################
+#######################   FICHIER PARAMETRES HARBOR  ##########################
+###############################################################################
+
+# Harbor variables
+harbor_name: 'sd-harbor.cpr.local'
+harbor_username: svc_Docker-harbor
+harbor_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          35623361633638653135646461363462643736366164383934373934613163353366643738613665
+          3230356333386634383736366531373632376262653566380a303038313538343635323038373032
+          65303364323535313633303435393235343732653034663236303130326163663935353064353435
+          3866653266656532650a313937616636333062303065363830613964633463336162326636626637
+          3363
+
+harbor_image:
+  TOMCAT9: "{{ harbor_name }}/devops/tomcat:9.0.107-jre8_cpr_20250711"
+  TOMCAT9_MANAGER: "{{ harbor_name }}/devops/tomcat:9.0.107-jre8-manager_cpr_20250711"
+  TOMCAT10: "{{ harbor_name }}/devops/tomcat:10.1.43-jre21_cpr_20250708"
+  WILDFLY20: "{{ harbor_name }}/devops/jboss/wildfly:20.0.1.Final_cpr_20250718"
+  JAVA11: "{{ harbor_name }}/proxy_dockerhub/openjdk:11.0.16"
+  JAVA21: "{{ harbor_name }}/proxy_dockerhub/openjdk:21"
+  NGINX: "{{ harbor_name }}/proxy_dockerhub/nginx:1.27.3-otel"
+  PORTAINER: "{{ harbor_name }}/proxy_dockerhub/portainer/portainer-ce:2.27.0"
+  PORTAINER-AGENT: "{{ harbor_name }}/proxy_dockerhub/portainer/agent:2.27.0"

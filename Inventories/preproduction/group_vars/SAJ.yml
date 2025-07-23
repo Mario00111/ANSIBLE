@@ -1,0 +1,58 @@
+###############################################################################
+#####################     FICHIER PARAMETRES QUA          #####################
+###############################################################################
+# Systeme var
+ram_var: '4096'
+cpu_var: '2'
+
+vm_disk_1_gb: 120
+vm_disk_1_scsi_unit: 1
+
+vm_disk_2_gb: 40
+vm_disk_2_scsi_unit: 2
+
+# VG / LV Config
+vg_name_1: 'vg-custom'
+
+lv_name_1: 'exploit'
+lv_size_1: '40g'
+mount_name_1: '/exploit'
+
+lv_name_2: 'datas'
+lv_size_2: '60g'
+mount_name_2: '/datas'
+
+
+# user var
+user_1: exploit
+user_1_comment: 'User exploit'
+user_1_id: 1113
+group_1_name: exploit
+group_1_number: 1112
+user_1_password: exploit
+
+
+# Vmware custom attributes
+custom_1_name: "Contact metier"
+custom_1_value: "admintot@cprpsncf.fr"
+custom_2_name: "Plage de maintenance"
+custom_2_value: "24/24h"
+custom_3_name: "Description"
+custom_3_value: "Serveur d application java standalone mutualise"
+
+# Tags attributes
+tag_app: "MUT"
+tag_env: "PPROD"
+tag_midd: "SAJ"
+
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+
+
+# Env extrat
+env_working : "{{ name_host[:-3] }}"
+
+# Network
+name_host : "{{ inventory_hostname.split('.')[0] }}"
+# VLAN
+subnet: NET-APPS-PRE

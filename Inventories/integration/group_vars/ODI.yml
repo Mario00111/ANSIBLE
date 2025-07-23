@@ -1,0 +1,88 @@
+###############################################################################
+#####################     FICHIER PARAMETRES DEVOPS PROD  #####################
+###############################################################################
+# Systeme var
+ram_var: '8192'
+cpu_var: '2'
+
+vm_disk_1_gb: 100
+vm_disk_1_scsi_unit: 1
+
+# VG / LV Config
+vg_name_1: 'vg-custom'
+
+lv_name_1: 'u01'
+lv_size_1: '15g'
+mount_name_1: '/u01'
+
+lv_name_2: 'SOFT'
+lv_size_2: '15g'
+mount_name_2: '/SOFT'
+
+lv_name_3: 'datas'
+lv_size_3: '5g'
+mount_name_3: '/datas'
+
+
+# Oracle var
+user_1: oracle
+user_1_comment: 'User Oracle'
+user_1_id: 500
+group_1_name: oinstall
+group_1_id: 500
+user_1_password: OracleODI_13
+
+user_2: expldu
+user_2_comment: 'User expldu'
+user_2_id: 501
+group_2_name: exploit
+group_2_id: 501
+user_2_password: expldu
+
+# Vmware custom attributes
+custom_1_name: "Contact metier"
+custom_1_value: "jean-pierre.corizzi@cprpf.fr"
+custom_2_name: "Plage de maintenance"
+custom_2_value: "12/24h"
+
+# Tags attributes
+tag_app: "ODI"
+tag_env: "INT"
+tag_midd: "WL"
+
+# repertoire
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+
+folder_base_oracle: '/u01'
+folder_oracle_home: '{{ folder_base_oracle }}/Middleware/Oracle_Home'
+folder_oracle: '{{ folder_base_oracle }}/applications/oracle'
+folder_install: '/install'
+
+folder_java: '/usr/lib/jvm/'
+
+## Version ODI ##
+version_odi: 'fmw_12.2.1.4.0_odi.jar'
+
+## Version JDK ##
+version_jdk: 'jdk-8u421-linux-x64.tar.gz'
+version_jdk_short: 'jdk1.8.0_421'
+
+folder_sas_Application : '/datas/Sas_Livrables/Sas_Application'
+folder_sas_Lib : '/datas/Sas_Livrables/Sas_Lib'
+folder_sas_Properties : '/datas/Sas_Livrables/Sas_Properties'
+folder_sas_RessourceAdapter : '/datas/Sas_Livrables/Sas_RessourceAdapter'
+folder_sas_ShareLib : '/datas/Sas_Livrables/Sas_ShareLib'
+
+folder_local_app : "/datas/Livrables/oracle"
+
+# Env extrat
+env_working : "{{ name_host[:-3] }}"
+
+# Network
+name_host : "{{ inventory_hostname.split('.')[0] }}"
+
+# VLANsubnet: NET-APPS-INT
+subnet: NET-APPS-INT

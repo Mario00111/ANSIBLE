@@ -1,0 +1,42 @@
+###############################################################################
+#####################     FICHIER PARAMETRES DEVOPS PROD  #####################
+###############################################################################
+# VG / LV Config
+vg_name_dk: 'vg-docker'
+lv_name_dk: 'docker'
+mount_name_dk: '/var/lib/docker'
+
+# docker var
+user: docker
+group_docker: docker
+password_docker: docker
+docker_repo_key_url: 'https://download.docker.com/linux/debian/gpg'
+
+folder_docker_keyring: '/etc/apt/keyrings'
+
+# repertoire
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+
+folder_sas_Application : '/datas/Sas_Livrables/Sas_Application'
+folder_sas_Lib : '/datas/Sas_Livrables/Sas_Lib'
+folder_sas_Properties : '/datas/Sas_Livrables/Sas_Properties'
+folder_sas_RessourceAdapter : '/datas/Sas_Livrables/Sas_RessourceAdapter'
+folder_sas_ShareLib : '/datas/Sas_Livrables/Sas_ShareLib'
+
+# Stockage local des livrables
+folder_local_app : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/app"
+folder_local_data : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/data"
+folder_local_lib : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/lib"
+folder_local_properties : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/properties"
+folder_local_properties_sa : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/properties_sa"
+folder_local_ressourceadapter : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/ressourceadapter"
+
+# Env extrat
+env_working : "{{ name_host[:-3] }}"
+
+# Network
+name_host : "{{ inventory_hostname.split('.')[0] }}"
+# VLAN

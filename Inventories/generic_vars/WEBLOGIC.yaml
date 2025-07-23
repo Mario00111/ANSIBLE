@@ -1,0 +1,154 @@
+###############################################################################
+#####################     FICHIER PARAMETRES ALL          #####################
+###############################################################################
+
+# user
+group_oracle: 'oinstall'
+user_oracle: 'oracle'
+
+# repertoire
+folder_domains: '/u01/domains'
+folder_domain: "{{ folder_domains }}/{{ inventory_hostname.split('.')[0] }}_domain"
+folder_install: '/u01/install'
+folder_patch: '/u01/install/patch_WLS'
+folder_scripts: '/u01/scripts'
+folder_tmp: '/u01/tmp'
+folder_config: "{{ folder_domains }}/config"
+folder_oracle: '/SOFT/oracle'
+
+folder_datas: '/datas'
+folder_logs: '/datas/logs'
+folder_sas_ansible : '/datas/Sas_Ansible'
+folder_sas_archive : '/datas/Sas_Archive'
+
+folder_sas_Application : '/datas/Sas_Livrables/Sas_Application'
+folder_sas_Lib : '/datas/Sas_Livrables/Sas_Lib'
+folder_sas_Properties : '/datas/Sas_Livrables/Sas_Properties'
+folder_sas_RessourceAdapter : '/datas/Sas_Livrables/Sas_RessourceAdapter'
+folder_sas_ShareLib : '/datas/Sas_Livrables/Sas_ShareLib'
+
+# Stockage local des livrables
+folder_local_app : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/app"
+folder_local_data : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/data"
+folder_local_lib : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/lib"
+folder_local_properties : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/properties"
+folder_local_properties_sa : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/properties_sa"
+folder_local_ressourceadapter : "/datas/Livrables/{{ typesa_app_var[-3:] }}/{{ env_var }}/ressourceadapter"
+folder_local_www : "/datas/Livrables/{{ inventory_hostname.split('.')[0] }}/www"
+folder_local_soft : "/datas/Livrables/ARCHIVE/SOFT"
+
+# Env extrat
+env_working : "{{ name_host[:-3] }}"
+
+# Network
+name_host : "{{ inventory_hostname.split('.')[0] }}"
+tunnel_secure : "secure{{ name_host[:-3] }}"
+
+#Middlware Home
+folder_middleware_home: '/SOFT/oracle/wls_122140'
+#folder_middleware_home: '/SOFT/oracle/wls_122130'
+#folder_middleware_home: '/SOFT/oracle/wls_121300'
+
+## Version WL #
+version_weblogic: 'fmw_12.2.1.4.0_infrastructure.jar'
+#version_weblogic: 'fmw_12.2.1.4.0_wls.jar'
+#version_weblogic: 'fmw_12.2.1.3.0_wls.jar'
+#version_weblogic: 'fmw_12.1.3.0.0_wls.jar'
+
+## Version OSB SOA
+version_soa: 'fmw_12.2.1.4.0_soa.jar'
+version_osb: 'fmw_12.2.1.4.0_osb.jar'
+#version_soa: 'fmw_12.2.1.3.0_soa.jar'
+#version_osb: 'fmw_12.2.1.3.0_osb.jar'
+
+## Version OHS
+version_ohs: 'fmw_12.2.1.4.0_ohs.bin'
+
+## Patch WLS 121300
+last_patch_set_update: 'p29633448_121300_Generic.zip'
+last_patch_samples: 'p29663844_121300_Generic.zip'
+
+## Version JDK ##
+#version_jdk: 'jdk-11.0.13_linux-x64_bin.tar.gz'
+#version_jdk_short: 'jdk-11.0.13'
+#version_jdk: 'jdk-8u191-linux-x64.tar.gz'
+#version_jdk_short: 'jdk1.8.0_191'
+#version_jdk: 'jdk-8u201-linux-x64.tar.gz'
+#version_jdk_short: 'jdk1.8.0_201'
+version_jdk: 'jdk-8u211-linux-x64.tar.gz'
+version_jdk_short: 'jdk1.8.0_211'
+
+## OPatch ##
+opatch_latest: '{{ opatch_version_1394213 }}'
+opatch_version_1394213: 'p28186730_1394213_Generic.zip'
+opatch_version_139428: 'p28186730_139428_Generic.zip'
+opatch_version_139400: 'p28186730_139400_Generic.zip'
+
+## Patch Soa##
+last_patch_Soasuite: 'p33751658_122140_Generic.zip'
+
+## Patch WLS122140
+patch_set_update_latest: 'p35557681_122140_Generic.zip'
+patch_package: 'p35679623_122140_Generic.zip'
+
+# Nom Domaine 
+name_DF: "{{ df[-3:] }}"
+
+# Nom Domaine SOA/OSB et cible deploy 
+name_DF_SOA: 'SOASuite'
+
+# Cible deploy
+name_SC: 'ManagedServer_1'
+
+# Mdp 
+#devows1_ows1_tma_passwd: "{{ vault_devows1tma_passwd }}"
+#devows1_passwd: "{{ vault_devows1__passwd }}"
+#recows1__passwd: "{{ vault_recows1__passwd }}"
+#quaows1__passwd: "{{ vault_quaows1__passwd }}"
+#prodows1__passwd: "{{ vault_prodows1__passwd }}"
+
+## SSL ##
+private_key_password: 'cprp13'
+private_cacerts_password: 'changeit'
+file_ssl_pem: "{{ folder_domain }}/certif_{{ name_host }}.pem"
+file_ssl_csr: "{{ folder_domain }}/certif_{{ name_host }}.csr"
+file_ssl_crt: "{{ folder_domain }}/certif_{{ name_host }}.crt"
+file_ssl_pfx: "{{ folder_domain }}/certif_{{ name_host }}.pfx"
+file_ssl_p12: "{{ folder_domain }}/keystore_{{ name_host }}.p12"
+file_ssl_jks: "{{ folder_domain }}/server_{{ name_host }}.jks"
+file_ssl_cacerts: "{{ folder_oracle }}/java_current/jre/lib/security/cacerts"
+
+# Variable Nexus
+var_group_id: 'fr.cprpsncf.refdoc'
+var_artifact_id: 'referentiel-documentaire-ear'
+#var_version : '1.1.0.1-SNAPSHOT'
+var_version: "{{ nexus_app_version }}"
+var_extension: 'ear'
+var_repository_url: "{{ nexus_url }}"
+var_username: 'gitlabTest'
+var_password: 'Cprpsncf@13'
+var_name_artifact: 'RD-WS-RefdocIhm-0.0.0.ear'
+
+# Variable BDD
+datasource1_name: 'REFDOC_FINAL'
+datasource1_jndi: 'jdbc/REFDOC_FINAL'
+datasource1_username: 'REFDOC_FINAL'
+datasource1_password: 'REFDOC'
+
+datasource2_name: 'REFDOC_PARAM'
+datasource2_jndi: 'jdbc/REFDOC_PARAM'
+datasource2_username: 'REFDOC_PARAM'
+datasource2_password: 'REFDOC'
+
+datasource3_name: 'REFDOC_VALID'
+datasource3_jndi: 'jdbc/REFDOC_VALID'
+datasource3_username: 'REFDOC_VALID'
+datasource3_password: 'REFDOC'
+
+datasource_all_host: 'oda-s02a-scan.cpr.sncf.fr'
+datasource_all_port: '1521'
+datasource_all_dbname: 'CPR1QUA'
+datasource_all_password: 'REFDOC'
+datasource_all_targets: 'ManagedServer_1'
+
+########################## FIN VAR ORACLE ##########################
